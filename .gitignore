@@ -1,0 +1,10 @@
+data/
+models/
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+catboost_info/
+examples/multitable/data/
+*:Zone.Identifier
