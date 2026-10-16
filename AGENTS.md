@@ -3,8 +3,14 @@
 You are the engineer on a 24-hour datathon team. Humans decide, you build.
 Goal: a **correct, complete, explainable** solution that a ForteBank jury trusts — not the fanciest one.
 
+## How we work
+- The phases are P1–P13 (plus PS for status) in `PLAYBOOK.md`. When the human says `run P<n>` (optionally `with: <details>`), read that prompt in PLAYBOOK.md and follow it exactly, then stop and report.
+- The human's inputs: `docs/brief.md` (the case), `data/raw/` (the data), `docs/jury.md` (what ForteBank and the jury need).
+- Timeline and roles: `GAMEPLAN.md`. Operator guide: `START_HERE.md`.
+
 ## Read before every task
 - `docs/context.md` — problem, target, metric, the bank decision being supported
+- `docs/jury.md` — what ForteBank and the jury said they need; shape the solution and the pitch around it
 - `CHECKLIST.md` — every requirement from the brief (judges grade against it)
 - `docs/decisions.md` — choices already made; never reverse one silently
 - The guide for the current phase in `docs/guides/` (the prompt names it)
@@ -22,13 +28,17 @@ Goal: a **correct, complete, explainable** solution that a ForteBank jury trusts
 | `src/explain.py` | per-row reasons + global importance |
 | `src/impact.py` | decision threshold → value in ₸ |
 | `app/app.py` | Streamlit demo |
+| `examples/multitable/` | tested pattern for applications + history tables |
+| `reports/` | data overview, sanity, explanations, insights, impact, submission |
+| `pitch/` | `deck_outline.md` (structure) → `deck_content.md` (filled by P11) |
 
 Run everything from the repo root through uv, as modules, e.g. `uv run python -m src.train --models dummy,linear,lgbm --note "baseline"`.
 
 ## Environment (uv)
 - The environment is managed by uv: `pyproject.toml` + `uv.lock` + `.python-version` (3.12). Set it up with `uv sync`.
 - Always run code with `uv run …`. Never use `pip install`, `python -m venv`, conda, or the system Python.
-- Need a new package? Ask first; once approved, `uv add <package>` (commit `pyproject.toml` and `uv.lock` together). Dev-only tools: `uv add --dev <package>`.
+- Already installed and approved: pandas, numpy, scikit-learn, lightgbm, catboost, shap, matplotlib, streamlit, pyarrow, openpyxl, tabulate, joblib, optuna (tuning), statsmodels (forecasting/statistics), python-pptx (slides), pytest.
+- Need anything else? Ask first; once approved, `uv add <package>` (commit `pyproject.toml` and `uv.lock` together). Dev-only tools: `uv add --dev <package>`.
 
 ## Hard rules
 1. Never modify `data/raw/`. Derived data goes to `data/processed/`.
