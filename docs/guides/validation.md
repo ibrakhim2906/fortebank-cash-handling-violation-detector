@@ -9,7 +9,28 @@ Validation decides whether every later number is real or fiction. Set it once, r
 | One client/entity has several rows | Group K-fold by client | `GROUP_COL = "<client id>"` |
 | Independent rows, no time | Stratified K-fold (binary) / K-fold | both `None` |
 
-Never shuffle time-ordered data. Never let the same client appear in train and validation folds.
+Never shuffle time-ordered data. For a client-disjoint evaluation, explicitly enable validation-group exclusion in time mode; setting `GROUP_COL` alone does not exclude clients in that mode. Review whether client separation matches the bank's intended population before freezing the protocol.
+
+## Time-mode options
+
+`make_folds(df)` remains the development-fold entry point for `src.train` and `src.sanity`. `score()` and `cross_validate()` are unchanged. Time splits use calendar dates (timestamps are normalized to midnight), return positional indices sorted by date, and never divide one calendar date between training and validation within a fold.
+
+The new settings default to off/automatic; no case-specific dates or label horizon are enabled in `src/config.py`:
+
+| Setting | Default | Behavior in time mode |
+|---|---|---|
+| `LABEL_GAP_DAYS` | `0` | Training dates must satisfy `date + gap < validation start`. Zero disables the additional maturity gap but still requires strictly earlier dates. Uses fixed calendar days, not calendar months. |
+| `VALIDATION_WINDOWS` | `None` | Automatically split sorted unique development dates into `N_FOLDS + 1` approximately equal chunks. The first is training-only; each later chunk is validated using eligible earlier dates. Row counts can differ substantially between chunks. |
+| `HOLDOUT_WINDOW` | `None` | Optional `(start, end)` interval, start inclusive/end exclusive. Its dates are removed from both training and validation in every development fold, including later folds if the interval is in the middle of the data. |
+| `EXCLUDE_VALIDATION_GROUPS` | `False` | If enabled, remove training rows whose `GROUP_COL` appears in the current validation fold. Requires a configured, non-missing group column. Otherwise `GROUP_COL` is optional and overlap is allowed in time mode. |
+
+Explicit `VALIDATION_WINDOWS` are a non-empty sequence of `(start, exclusive_end)` pairs, in chronological order without overlap. They determine the fold count instead of `N_FOLDS`. Reserved holdout dates are removed even if an explicit development interval overlaps them. Automatic chunking excludes holdout dates before splitting unique dates. Windows with no remaining validation rows or no eligible training rows raise `ValueError`; a large label gap can therefore require later explicit windows instead of automatic ones.
+
+Call `make_folds(df, holdout=True)` only for final evaluation after model, calibration and threshold choices are frozen. It returns exactly the configured holdout fold, with the same gap and optional group exclusion applied to its earlier training data. It requires `HOLDOUT_WINDOW` and `TIME_COL`; no holdout is silently selected. Prefer a final chronological interval for a future-use estimate; the splitter excludes a middle holdout interval but does not prohibit development dates after it.
+
+Missing dates, negative/non-integer gaps, insufficient unique dates for automatic folds, invalid/overlapping explicit windows and empty folds fail with an error. With `TIME_COL = None`, the existing grouped/stratified/K-fold behavior remains unchanged; gap, explicit time windows and time-mode group-exclusion settings do not change those branches. A configured holdout without a time column raises an error because its dates cannot be reserved.
+
+Choose any nonzero label gap from the actual outcome horizon and reporting availability. A fixed 183-day illustration is not identical to six calendar months after issue, and no such assumption is enabled by default. The mock-specific configuration and read-only fold tables live only in `tests/test_eval.py`; tests never fit models. Raw mock data is optional and its two integration tests skip when the ignored CSV is absent. Run `uv run pytest` to see the printed mock fold tables when the CSV is present.
 
 ## Checks before freezing `eval.py`
 1. Metric in `score()` is exactly the official one (same definition, same averaging).

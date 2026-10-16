@@ -22,6 +22,10 @@ TASK = "binary"          # "binary" or "regression"
 METRIC = "roc_auc"       # roc_auc | pr_auc | gini | f1 | rmse | mae
 N_FOLDS = 5
 SEED = 42
+LABEL_GAP_DAYS = 0
+VALIDATION_WINDOWS = None
+HOLDOUT_WINDOW = None
+EXCLUDE_VALIDATION_GROUPS = False
 
 # --- business assumptions (binary tasks) -------------------------------------
 # Agree these with ForteBank mentors; they are shown on the impact slide.
