@@ -18,6 +18,12 @@ qwen3-32b-awq) mission_model_dir=/workspace/models/qwen3-vl-32b-awq;mission_mani
 qwen3-30b-a3b-awq) mission_model_dir=/workspace/models/qwen3-vl-30b-a3b-awq;mission_manifest=deploy/qwen3-vl-30b-a3b-awq.json;mission_quantization=(--quantization awq_marlin);mission_dtype=float16;mission_eager=();mission_call_timeout=60;;
 *) printf 'Unknown pinned auditor profile\n' >&2;exit 2;;
 esac
+if [ -n "${AUDITOR_CALL_TIMEOUT:-}" ]; then
+  if [[ ! "$AUDITOR_CALL_TIMEOUT" =~ ^[1-9][0-9]?$ ]] || (( AUDITOR_CALL_TIMEOUT > 90 )); then
+    printf 'Auditor call timeout must be an integer from 1 to 90 seconds\n' >&2;exit 2
+  fi
+  mission_call_timeout="$AUDITOR_CALL_TIMEOUT"
+fi
 case "${1:-prepare}" in
 prepare)
   if [ ! -f /opt/vllm/.mission-ready ]; then

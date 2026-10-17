@@ -1,7 +1,7 @@
 """Bounded reserve, robustness and public API checkpoint; private artifacts only."""
-import argparse,datetime,hashlib,json,os,random,subprocess,time
+import argparse,datetime,hashlib,json,math,os,random,subprocess,time
 from pathlib import Path
-from scripts.eval_video import PROTOCOL,ANNOTATIONS,SPLIT,api_run,score_records,setup
+from scripts.eval_video import PROTOCOL,ANNOTATIONS,SPLIT,score_records,setup
 from scripts.mission_validation import TRANSFORMS,augment,event_signature
 from src import config
 
@@ -27,11 +27,66 @@ def quick_groups(groups,split):
     return selected
 
 
+def selected_recipe(honest,freeze=None):
+    """An explicitly frozen recipe is required for primary runtime credit."""
+    value=(freeze if freeze is not None else honest).get('recipe_sha256')
+    if value is None and freeze is None:return None
+    if not isinstance(value,str) or len(value)!=64 or any(c not in '0123456789abcdef' for c in value):
+        raise ValueError('Expected a frozen serving recipe SHA-256')
+    return value
+
+
+def worst_case_repeats(longest,api,key_file,root,expected_recipe):
+    """Run two real uploads through the same trace capture as the API sweep."""
+    repeats=[]
+    for index in range(1,3):
+        output=root/f'worst-case-{index}.json'
+        report=run(['--subset','all','--only',longest['group_id'],
+                    '--api',api,'--key-file',str(key_file)],output)
+        records=report.get('records',[])
+        if len(records)!=1 or records[0].get('group_id')!=longest['group_id']:
+            raise ValueError('Worst-case run did not evaluate exactly the requested recording')
+        record=records[0]
+        trace_path=output.with_suffix('.traces')/(longest['group_id']+'.json')
+        row=dict(status=record['status'],elapsed_sec=record.get('elapsed_sec'),
+                 group_id=longest['group_id'],report_path=str(output),trace_path=str(trace_path))
+        try:
+            trace_bytes=trace_path.read_bytes();trace=json.loads(trace_bytes)
+            analysis=trace.get('analysis') or {}
+            # Full facts/answers stay in the private trace, never in the console summary.
+            row.update(job_id=trace.get('job_id'),analysis={k:analysis.get(k) for k in ['engine','recipe_sha256']},
+                       trace_sha256=hashlib.sha256(trace_bytes).hexdigest())
+            if trace.get('trace_error'):row['trace_error']=trace['trace_error']
+            elapsed=row['elapsed_sec'];traced_elapsed=trace.get('api_elapsed_sec')
+            same_elapsed=(type(elapsed) in [int,float] and type(traced_elapsed) in [int,float]
+                          and math.isfinite(elapsed) and elapsed>=0
+                          and math.isclose(elapsed,traced_elapsed,rel_tol=1e-9,abs_tol=1e-6))
+            primary=(record['status']==trace.get('status')=='done'
+                     and isinstance(row['job_id'],str) and bool(row['job_id'].strip())
+                     and not row.get('trace_error') and same_elapsed and expected_recipe is not None
+                     and analysis.get('engine')=='mission-v1'
+                     and analysis.get('recipe_sha256')==expected_recipe)
+        except (OSError,ValueError,TypeError,AttributeError) as exc:
+            row['trace_error']=type(exc).__name__;primary=False
+        row.update(primary_recipe_verified=primary,runtime_qualified=primary and row['elapsed_sec']<=200)
+        repeats.append(row)
+    # A cached/reused job cannot establish two consecutive actual API runs.
+    passed=all(r['runtime_qualified'] for r in repeats) and len({r.get('job_id') for r in repeats})==2
+    observed=[r['elapsed_sec'] for r in repeats if type(r.get('elapsed_sec')) in [int,float] and math.isfinite(r['elapsed_sec'])]
+    qualification=dict(selected_recipe_sha256=expected_recipe,two_worst_case_runs_passed=passed,
+                       qualified_worst_sec=max(observed) if passed else None,
+                       observed_worst_sec=max(observed) if observed else None,
+                       scope='Two longest-recording API uploads only; full API and robustness scope remain separate.')
+    return repeats,qualification
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--api',required=True);p.add_argument('--key-file',type=Path,required=True)
     p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--honest',type=Path,required=True)
+    p.add_argument('--freeze',type=Path,help='Frozen serving recipe JSON; required for runtime credit unless --honest includes recipe_sha256')
     p.add_argument('--quick',action='store_true',help='Reserve10 plus balanced DEV4 and their28transforms; no full-set product/robustness credit')
     args=p.parse_args(argv)
+    expected_recipe=selected_recipe(json.loads(args.honest.read_text()),json.loads(args.freeze.read_text()) if args.freeze else None)
     root=args.run_dir.resolve()
     if not root.is_relative_to(config.DATA_PROC):raise ValueError('Checkpoint artifacts must be private derived data')
     root.mkdir(parents=True,exist_ok=False)
@@ -42,6 +97,8 @@ def main(argv=None):
     temp=counter.with_suffix('.tmp');temp.write_text(json.dumps(prior,indent=2));temp.replace(counter)
     # Every checkpoint report identifies the actual frozen evaluator bytes.
     summary=dict(evaluator_sha256=hashlib.sha256((config.ROOT/'scripts/eval_video.py').read_bytes()).hexdigest(),honest_report_sha256=hashlib.sha256(args.honest.read_bytes()).hexdigest(),reserve_check=len(prior),official_score=False)
+    summary['selected_recipe_sha256']=expected_recipe
+    if args.freeze:summary['freeze_sha256']=hashlib.sha256(args.freeze.read_bytes()).hexdigest()
     protocol=json.loads(PROTOCOL.read_text());notes=json.loads(ANNOTATIONS.read_text())
     only=quick_groups(protocol['groups'],json.loads(SPLIT.read_text())) if args.quick else []
     scope=['--only',*only] if only else []
@@ -62,11 +119,9 @@ def main(argv=None):
     augmented=dict(accuracy=sum(r['accuracy'] for r in transforms)/len(transforms),clean_accuracy=dev_api['accuracy'] if args.quick else api_all['accuracy'],all_requested_transforms_complete=not args.quick and all(r['n_videos']==40 and r['failed']==0 for r in transforms),transforms=transforms)
     (root/'augmented.json').write_text(json.dumps(augmented,indent=2)+'\n');summary['augmented']=augmented
     longest=max(protocol['groups'],key=lambda g:g['duration_sec'])
-    key=args.key_file.read_text().strip();repeats=[]
-    for _ in range(2):
-        result,elapsed=api_run(config.ROOT/longest['path'],args.api,key)
-        repeats.append(dict(status=result['status'],elapsed_sec=elapsed))
+    repeats,qualification=worst_case_repeats(longest,args.api,args.key_file,root,expected_recipe)
     summary['worst_case_repeats']=repeats
+    summary['runtime_qualification']=qualification
     # All40 uploads reach the worker as anonymous source.mov; then re-encode
     # every source too, so a byte-fingerprint lookup cannot pass this control.
     clean={r['group_id']:r for r in api_all['records']}

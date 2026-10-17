@@ -40,18 +40,19 @@ def test_network_timeout_is_not_repeated_until_job_exhaustion():
     assert len(calls)==1
 
 
-def test_larger_model_call_still_respects_remaining_video_budget(monkeypatch):
-    monkeypatch.setenv('AUDITOR_CALL_TIMEOUT','60');limits=[]
+@pytest.mark.parametrize('configured',[60,90])
+def test_larger_model_call_still_respects_remaining_video_budget(monkeypatch,configured):
+    monkeypatch.setenv('AUDITOR_CALL_TIMEOUT',str(configured));limits=[]
     def request(url,payload,timeout):
         limits.append(timeout)
         return dict(model='qwen-vl',choices=[dict(finish_reason='stop',message=dict(content='{"visible":false}'))])
     frame=[dict(timestamp_sec=0,image=b'jpeg')]
     vlm.ask(frame,'?',Reply,time.monotonic()+200,requester=request)
     vlm.ask(frame,'?',Reply,time.monotonic()+5,requester=request)
-    assert limits[0]==60 and 0<limits[1]<=4.5
+    assert limits[0]==configured and 0<limits[1]<=4.5
 
 
-@pytest.mark.parametrize('value',['61','0','nan','inf'])
+@pytest.mark.parametrize('value',['91','0','nan','inf'])
 def test_invalid_larger_model_timeout_never_reaches_network(monkeypatch,value):
     monkeypatch.setenv('AUDITOR_CALL_TIMEOUT',value)
     def forbidden(*args):raise AssertionError('Invalid runtime configuration must not send a request')
