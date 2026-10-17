@@ -156,7 +156,7 @@ def confirmed_observations(frames,deadline,*,requester=None,overview_count=None,
                   'Index onset/evidence in THESE focused frames; explain visible_fact in Russian. '
                   'Check physical predicate: '+candidate.kind+'. '+catalogue)
         if time.monotonic()+11>=deadline:
-            log.append(dict(stage='audit_incomplete',error_code='BudgetLimit'));break
+            log.append(dict(stage='audit_incomplete',error_code='BudgetLimit'));continue
         try:
             checked,meta=ask(focused,question,confirmation_schema,deadline,requester=requester,max_tokens=512)
         except (OSError,TimeoutError,ValueError,KeyError) as exc:
