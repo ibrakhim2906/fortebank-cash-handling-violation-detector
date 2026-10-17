@@ -37,8 +37,14 @@ def ask(frames,prompt,response_model,deadline,*,requester=None,max_tokens=768):
         t=f['timestamp_sec'];image=f['image']
         if not isinstance(t,(int,float)) or not math.isfinite(t) or t<0 or not isinstance(image,bytes) or len(image)>1024**2:raise ValueError('Invalid auditor source frame')
         content += [dict(type='text',text=f'Frame {i}; actual source time {t:.3f} seconds.'),dict(type='image_url',image_url=dict(url='data:image/jpeg;base64,'+base64.b64encode(image).decode()))]
+    schema=response_model.model_json_schema()
+    if frame_limit()==64:
+        for definition in [schema,*schema.get('$defs',{}).values()]:
+            for key in ['onset_frame','evidence_frame']:
+                field=definition.get('properties',{}).get(key)
+                if field is not None:field['maximum']=min(field.get('maximum',len(frames)-1),len(frames)-1)
     body=dict(model=MODEL,messages=[dict(role='system',content=SYSTEM),dict(role='user',content=content)],temperature=0,seed=config.SEED,max_tokens=max_tokens,stream=False,
-              response_format=dict(type='json_schema',json_schema=dict(name='observations',strict=True,schema=response_model.model_json_schema())))
+              response_format=dict(type='json_schema',json_schema=dict(name='observations',strict=True,schema=schema)))
     resolution=os.environ.get('AUDITOR_RESOLUTION','standard')
     if resolution not in ['standard','source']:raise ValueError('Unknown auditor image resolution')
     if resolution=='source':body['mm_processor_kwargs']=dict(min_pixels=3136,max_pixels=524288)

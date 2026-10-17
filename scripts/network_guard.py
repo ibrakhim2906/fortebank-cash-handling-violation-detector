@@ -1,6 +1,6 @@
 """Linux x86_64 kernel test guard: deny creation of IP/packet sockets.
 
-For isolated validation workers only. Pre-established loopback HTTP and Unix
+For isolated validation workers only. Pre-established same-machine TCP and Unix
 IPC remain usable. This is irreversible for the process and its threads.
 No Python monkeypatch or additional package is used.
 """
@@ -49,6 +49,27 @@ def probe_blocked():
     return results
 
 
+def local_interface_addresses():
+    """Read exact addresses owned by this network namespace, without DNS."""
+    values=set();trie=Path('/proc/self/net/fib_trie')
+    if trie.exists():
+        lines=trie.read_text().splitlines()
+        for before,after in zip(lines,lines[1:]):
+            if '/32 host LOCAL' not in after:continue
+            try:values.add(ipaddress.ip_address(before.split()[-1]))
+            except (ValueError,IndexError):continue
+    ipv6=Path('/proc/self/net/if_inet6')
+    if ipv6.exists():
+        for line in ipv6.read_text().splitlines():
+            values.add(ipaddress.ip_address(bytes.fromhex(line.split()[0])))
+    return values
+
+
+def same_machine_address(value,owned):
+    address=getattr(value,'ipv4_mapped',None) or value
+    return address.is_loopback or address in owned
+
+
 def existing_ip_sockets():
     """Audit this process's pre-existing peers before restricting new sockets."""
     owned=set()
@@ -60,7 +81,8 @@ def existing_ip_sockets():
         raw=bytes.fromhex(value)
         raw=b''.join(raw[i:i+4][::-1] for i in range(0,len(raw),4))
         return ipaddress.ip_address(raw)
-    def local(value):return value.is_loopback or bool(getattr(value,'ipv4_mapped',None) and value.ipv4_mapped.is_loopback)
+    interfaces=local_interface_addresses()
+    def local(value):return same_machine_address(value,interfaces)
     result=[]
     for protocol in ['tcp','tcp6','udp','udp6','raw','raw6']:
         path=Path('/proc/self/net')/protocol

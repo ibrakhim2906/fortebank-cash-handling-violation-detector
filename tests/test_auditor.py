@@ -218,3 +218,13 @@ def test_wide_input_still_rejects_omissions_when_coverage_is_incomplete(monkeypa
     if gapped:
         for f in source:f['timestamp_sec']*=2
     assert a.confirmed_observations(source,time.monotonic()+120,requester=request)[0]==[] and len(calls)==1
+
+
+def test_wide_guided_schema_bounds_indices_to_images_actually_presented(monkeypatch):
+    monkeypatch.setenv('AUDITOR_FRAMES','64')
+    def request(url,payload,timeout):
+        schema=json.loads(payload)['response_format']['json_schema']['schema']
+        fields=schema['$defs']['WideCandidate']['properties']
+        assert fields['onset_frame']['maximum']==fields['evidence_frame']['maximum']==19
+        return reply(dict(visibility='clear',observations=[]))
+    assert a.confirmed_observations(frames(20),time.monotonic()+60,requester=request)[0]==[]

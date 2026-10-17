@@ -12,6 +12,11 @@ from scripts.network_guard import deny_new_ip_sockets,existing_ip_sockets,probe_
 from service.pipeline.analyze import analyze_detailed
 
 
+def set_connection_timeout(connection,seconds):
+    connection.timeout=seconds
+    if connection.sock is not None:connection.sock.settimeout(seconds)
+
+
 def model_tree(profile):
     directory=PROFILES[profile]['directory'].encode();parents={};commands={}
     for p in Path('/proc').iterdir():
@@ -51,6 +56,7 @@ def main(argv=None):
         if not all(r['passed'] and r['utc_epoch']>=armed_epoch for r in model_proofs):raise RuntimeError('A model process is not kernel guarded')
         connection=http.client.HTTPConnection('127.0.0.1',8002,timeout=30);connection.connect()
         def ping():
+            set_connection_timeout(connection,3)
             connection.request('GET','/health');r=connection.getresponse();r.read(4096)
             if r.status!=200:raise RuntimeError('Model health check failed')
         ping();peers=existing_ip_sockets()
@@ -66,7 +72,7 @@ def main(argv=None):
         def request(url,payload,timeout):
             if url!='http://127.0.0.1:8002/v1/chat/completions':raise ValueError('Unexpected endpoint')
             with lock:
-                connection.timeout=timeout
+                set_connection_timeout(connection,timeout)
                 connection.request('POST','/v1/chat/completions',body=payload,headers={'Content-Type':'application/json'})
                 response=connection.getresponse();body=response.read(128*1024+1)
                 if response.status!=200 or len(body)>128*1024:raise ValueError('Invalid model HTTP response')
@@ -77,7 +83,9 @@ def main(argv=None):
     except Exception as exc:result['error_code']=type(exc).__name__
     finally:
         stop.set()
-        if thread is not None:thread.join(timeout=2)
+        if thread is not None:thread.join(timeout=4)
+        if ping_errors or (thread is not None and thread.is_alive()):
+            result.update(passed=False,error_code='KeepaliveFailure',ping_errors=list(ping_errors))
         if connection is not None:connection.close()
         result['elapsed_sec']=time.monotonic()-started;args.json.parent.mkdir(parents=True,exist_ok=True);args.json.write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps(result,indent=2))
