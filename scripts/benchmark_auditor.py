@@ -3,7 +3,8 @@
 No labels are read. Cached replies require matching model/runtime and exact
 request bytes. Real API latency remains mandatory for promotion.
 """
-import argparse,base64,hashlib,json,os,time,urllib.request
+import argparse,base64,hashlib,importlib,importlib.util,json,math,os,time,urllib.request
+from contextlib import contextmanager
 from pathlib import Path
 import jsonschema
 from src import config
@@ -14,6 +15,29 @@ from service.pipeline.frames import iter_frames
 
 
 def canonical(value):return json.dumps(value,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()
+
+
+@contextmanager
+def pipeline_replay_clock(replayed):
+    """Sequential benchmark only: advance pipeline clocks, never stdlib/network time.
+
+    Import optional spatial verification before replacement so its lazy import
+    sees the same clock. Restore every module even when inference raises.
+    """
+    names=['service.pipeline.analyze','service.pipeline.auditor','service.pipeline.vlm','src.video_analysis']
+    if importlib.util.find_spec('service.pipeline.spatial') is not None:names.append('service.pipeline.spatial')
+    modules=[importlib.import_module(name) for name in names]
+    originals=[(module,module.time) for module in modules]
+    real_time=time
+    class ReplayTime:
+        def monotonic(self):return real_time.monotonic()+replayed()
+        def __getattr__(self,name):return getattr(real_time,name)
+    clock=ReplayTime()
+    try:
+        for module,_ in originals:module.time=clock
+        yield
+    finally:
+        for module,original in originals:module.time=original
 
 
 def runtime_signature(profile):
@@ -66,12 +90,15 @@ def run_one(path,input_id,inputs,cache,runtime,*,use_cache):
         nonlocal replayed,fresh_calls,hits,budget_uncertain
         body=json.loads(payload);key=hashlib.sha256(payload).hexdigest();target=cache/runtime/(key+'.json')
         remaining=165-(time.monotonic()-started+replayed)
-        if remaining<=11:
+        if remaining<=0:
             budget_uncertain=True;raise TimeoutError('Cached policy requires real API budget replay')
         if use_cache and target.exists():
             entry=json.loads(target.read_text())
-            if entry['elapsed_sec']>=remaining:
-                budget_uncertain=True;raise TimeoutError('Cached call exceeds remaining measured budget')
+            elapsed=float(entry['elapsed_sec'])
+            if not math.isfinite(elapsed) or elapsed<0:raise ValueError('Invalid cached duration')
+            if elapsed>=remaining or elapsed>timeout:
+                replayed+=min(timeout,remaining)
+                budget_uncertain=True;raise TimeoutError('Cached call exceeds bounded request timeout')
             replayed+=entry['elapsed_sec'];hits+=1;return entry['response']
         req=urllib.request.Request(url,data=payload,headers={'Content-Type':'application/json'},method='POST');before=time.monotonic()
         with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(req,timeout=min(timeout,remaining)) as r:
@@ -87,7 +114,8 @@ def run_one(path,input_id,inputs,cache,runtime,*,use_cache):
         return response
     pipeline.perception=perception
     try:
-        result,analysis=pipeline.analyze_detailed(path,deadline=started+185,requester=request)
+        with pipeline_replay_clock(lambda:replayed):
+            result,analysis=pipeline.analyze_detailed(path,deadline=started+185,requester=request)
         result=Result.model_validate(result).model_dump();status='done'
     except Exception as exc:result=None;analysis=dict(engine='failed',error_code=type(exc).__name__);status='failed'
     finally:pipeline.perception=original
