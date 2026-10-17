@@ -1,5 +1,11 @@
 data/
 models/
+weights/
+reports/**/*.jpg
+reports/**/*.png
+reports/**/*.mp4
+reports/**/*.mov
+tools/local-action-model/
 .venv/
 .pytest_cache/
 __pycache__/

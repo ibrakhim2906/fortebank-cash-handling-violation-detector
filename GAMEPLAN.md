@@ -1,60 +1,44 @@
-# Datathon '26 — Game Plan
+# Game plan — one human + Codex, no sleep, now → 12:00 Oct 18
 
-**Core rule:** Codex writes the code. The team owns the evaluation, the insight and the story.
-Operator guide: `START_HERE.md` · prompts P1–P13 + PS: `PLAYBOOK.md` · deck structure: `pitch/deck_outline.md` · visual template: "Datathon ’26 Pitch Template" in claude.ai artifacts.
-
-## Morning (Oct 17)
-- `sudo apt install -y bubblewrap` (Codex sandbox) and `uv run pytest` (should pass, 2 skipped)
-- Check-in **09:00, Orange Hall** — laptop, charger, extension cord
-- **11:00 kickoff:** ask organizers whether prepared code and AI tools are allowed. Download the data.
-- `mkdir -p data/raw` → put data in `data/raw/`, paste the full brief into `docs/brief.md`
+**Goal:** the most capable solution within the rules — Facts → Rules engine + local Protocol Auditor (GPU), with a CPU fallback that always works.
+Score = detection 25 · timecode 15 · type 15 · legal 15 · robustness 10 · product 10 · tech 10.
+Two tracks run in parallel: **Codex builds**, **you do the human-only work** (pod, review, filming, legal check).
 
 ## Timeline
-| Time | Phase | Codex | Humans |
-|---|---|---|---|
-| 12:00–13:00 | Understand | **P1**: context, checklist, data overview, plan — no models | Ask ForteBank mentors the `docs/jury.md` questions. Approve the plan. Log decisions in `docs/decisions.md`. |
-| 13:00–15:00 | Baseline | **P2**: config + dataset + baseline. **P3**: leakage audit | Set validation options (below). Read `src/eval.py`, then freeze it: `git commit -m "freeze eval"`. |
-| 15:00–00:00 | Improve | **P4**: one feature family per branch, 2–3 in parallel. **P5**: model comparison. **P6: insight hunt** | Check every number against `experiments.md`. Pick the strongest insight. Deck owner starts slides 2–3 by ~18:00. |
-| 00:00 | Feature freeze | — | Sleep in shifts |
-| 00:00–04:00 | Explain + money | **P7**: reasons in plain words. **P8**: ₸ impact with ForteBank's costs | Check drivers make business sense |
-| 04:00–08:00 | Demo + README | **P9**: demo. **P10**: README | Pick 3 demo clients (high / low / borderline). Record a backup video. |
-| 08:00–12:00 | Pitch + freeze | **P11**: slide content. **P12**: Q&A prep. **P13**: fresh-clone check | Fill the deck, cut to 5 slides for a 2-minute slot, rehearse 5+ times with a timer |
-| ~10:00 | Code freeze | — | Submit, check the submission opens |
-| **Oct 18, 13:00** | **Pitch** | — | Best speaker presents |
+| Time | Codex | You |
+|---|---|---|
+| 19:20–20:00 | `run V0` (service skeleton, contract tests) | Commit kit. **Create the RunPod pod** (deploy.md, 10 min). Push repo to a private GitHub. |
+| 20:00–20:45 | `run V1` (perception; cache in background) | cloudflared on laptop → test URL from phone (CPU fallback ready early) |
+| 20:45–21:15 | `run V2` (eval) | Review → `git commit -m "freeze eval"`, `git tag good-v2` |
+| 21:15–22:00 | `run G1` (pod setup over SSH, vLLM + service, public pod URL) | Check pod URL from phone |
+| 22:00–01:00 | `run V3` → `run V4` (scene, facts, rules engine, Tier 1 + cash/door/safe) | Review fact strips; tell Codex what the facts miss |
+| 01:00–03:00 | `run G2` (Protocol Auditor + fusion) on the pod | Watch the auditor log on X-1, X-2, Х-22, Х-32, Х-33, Х-34, Х-47 |
+| 03:00–04:00 | `run V5 with: <type>` loop (rules) | **Film own clips** (see below) |
+| 04:00–06:00 | `run G3` (auditor tuning) + `V5c` timecode calibration + `V5t` type names | Approve keep/drop by eval only |
+| 06:00–07:30 | `run V7 with: own clips` (new-angle test, speed, AUDITOR on/off) | Review |
+| 07:30–08:30 | `run V8` (fact timeline + auditor checks in UI, `/rules` page) | Check UI on phone |
+| 08:30–09:30 | `run V9` (legal check, docs/submission.md) | Verify every quote on adilet.zan.kz |
+| 09:30–10:30 | `run V10` on the pod URL **and** the laptop URL; 5 videos back-to-back | Pick the jury URL (higher score + stable) |
+| **by 11:00** | Freeze | **Hand in URL + key** (1 h buffer) |
+| 11:00 → jury done | — | Pod running + laptop awake as backup; `/health` checks |
 
-## Validation options to set in P2 (eval v2, in `src/config.py`)
-Decide from the real brief, write the choice in `docs/decisions.md`, then let Codex set them:
-- `TIME_COL` — the decision date (application / report date). Folds always cut on date boundaries.
-- `LABEL_GAP_DAYS` — length of the target window (e.g. "default within 6 months" → ~183). Training rows must have a known outcome before validation starts. 0 = off.
-- `GROUP_COL` + `EXCLUDE_VALIDATION_GROUPS` — set when one client has several rows. Excluding validation clients from training is conservative; keep it off if many test rows are returning clients.
-- `HOLDOUT_WINDOW` — last month(s) kept untouched until the end; check once with `make_folds(df, holdout=True)`.
-- Fewer validation rows = noisier score: treat AUC differences under ~0.01 as noise.
+## Scoring assumptions
+Decided ourselves in `docs/jury.md` (bilingual type names, onset timecodes, all violations most-confident-first). `run V5t` applies them.
 
-## Roles
-- **Driver:** runs Codex, reviews diffs, merges to main
-- **Verifier:** owns `src/eval.py` and `src.sanity`, checks every number
-- **Analyst / pitch:** ForteBank mentors, the insight, the ₸ case, the deck
-- **Demo:** app, README, backup video
+## Own clips (03:00–04:00, alone, ~45 min)
+Phone on a stack of books, 2 new angles (side, high-front). Desk + box as safe + a door. Act out: leave with paper "cash" on the desk, leave door open, drink at the desk, read a book, bag on the desk, laptop open when leaving, keys left in a lock; plus 3 clean runs (desk cleared, door closed). Save to `data/raw/own/` + `labels.csv` (video, second, type). This is the never-tuned new-angle test.
 
-## What wins
-1. ForteBank's own words — build the pitch on what mentors say they need
-2. One insight others missed, with a number and a chart
-3. Honest validation — "we caught a leak / a trap" is a strong line
-4. ₸ value above the no-model baseline, with stated assumptions
-5. Every brief requirement visibly ticked
-6. A rehearsed 2-minute pitch
+## If you fall behind (cut in this order)
+1. V8 extras (feedback, Docker) → 2. own clips → 3. G3 auditor tuning → 4. procedure rules that fire on clean videos → 5. G2 auditor entirely (CPU mode is then the jury URL).
+**Never cut:** V0, V2 freeze, a working public URL, V7 speed check, V9 legal check, V10 external test, hand-in by 11:00.
+If a phase takes > 2× its slot: `run VS`, then cut.
 
-## The 5 human checks
-1. `src/eval.py` mimics real use and is frozen
-2. Top features exist at the decision moment
-3. Every slide number traces to `experiments.md` or `reports/`
-4. Every `CHECKLIST.md` item is shown in the pitch
-5. The pitch fits the time limit
+## Safety rails (no sleep)
+- `git tag good-<time>` and `git push --tags` after every passing phase (the pod pulls from GitHub); after 08:00 roll back instead of debugging.
+- Codex needs network/SSH permission for G1 (Codex settings → full access, or run the printed commands yourself).
+- Never approve changes to `service/app.py` without `uv run pytest` green.
+- The CPU fallback URL must work at all times; the pod is an upgrade, not a single point of failure.
+- 10-minute break every 2 hours. Hand-in at 11:00 is non-negotiable.
 
-## If things go wrong
-- **Codex usage limit:** switch reasoning High → Medium, or use a backup account
-- **Score looks too good** (AUC > 0.95 on bank data): assume leakage, run `uv run python -m src.sanity`
-- **Case isn't tabular:** P1 sends Codex to `docs/guides/problem_types.md` — plan first, then build
-- **Codex says "sandbox failed / bubblewrap missing":** `sudo apt install -y bubblewrap`, restart the app
-- **Demo breaks on stage:** play the backup video
-- **A teammate needs the code:** push to a private GitHub repo; everyone pulls from main
+## Review loop (with Claude)
+After every phase paste Codex's final report + the eval summary lines. You get back: approve / reject, what to fix, the next exact prompt.

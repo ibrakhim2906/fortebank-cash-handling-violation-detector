@@ -1,42 +1,28 @@
-# START HERE — how to run the datathon with this repo
+# START HERE — ForteBank video case
 
-You give Codex three inputs. Codex builds; you approve at checkpoints.
-Timeline and roles: `GAMEPLAN.md` · every prompt: `PLAYBOOK.md` · Codex rules: `AGENTS.md`.
+**What we build:** a local AI service that checks cashier videos for cash-discipline violations and returns verdict,
+type, timecode, evidence frames, description and the НБРК rule — through a UI and an API the jury tests automatically.
+**Our edge:** Facts → Rules. Perception turns video into a timeline of facts; editable JSON rules linked to real НБРК
+articles turn facts into violations. New violation type = new rule, no retraining. A local Protocol Auditor (open VLM on our own GPU server) checks procedure steps. Runs offline; CPU-only fallback; auto-calibrated per camera.
 
-## 1. The three inputs (11:00–12:30)
-| Input | Where | When |
-|---|---|---|
-| The case — full text of the brief, rules, metric, deliverables, deadlines | `docs/brief.md` | At kickoff, unedited |
-| The data — every file exactly as received | `data/raw/` (`mkdir -p data/raw` first) | At kickoff |
-| The jury — what ForteBank mentors said, who judges, pitch length, ₸ costs | `docs/jury.md` | After talking to mentors (can come after P1) |
+## Read in this order (10 minutes)
+1. `docs/case/requirements.md` — every requirement with its check
+2. `docs/case/architecture.md` — the approach, models, licences, timing
+3. `docs/case/rules_engine.md` — facts and rule format
+4. `docs/case/violations.md` — what we think each video shows (confirm by watching!)
+5. `PLAYBOOK.md` — phases V0–V10 for Codex; `GAMEPLAN.md` — who does what when
 
-Then check the environment once: `uv run pytest` (passes, 2 skipped).
+## Setup (once)
+```
+mkdir -p data/raw/open && unzip open.zip -d data/raw/      # → data/raw/open/videos, open_labels.xlsx
+sudo apt install -y bubblewrap ffmpeg                       # Codex sandbox + video fallback
+```
+Then in Codex (project = `~/datathon-kit`, agent environment WSL): `run V0`.
 
-## 2. Talk to Codex in short commands
-Open the `datathon-kit` project in Codex (agent environment: WSL). Codex reads `AGENTS.md` automatically and knows the phases in `PLAYBOOK.md`, so you only say which one to run:
+## Talking to Codex
+`run V0` … `run V10`, `run V5 with: cash_left_out`, `run VS`. Reasoning: **High** for V3, V4, V5, V7; **Medium** otherwise.
 
-| You say | Codex does | Your checkpoint before the next step |
-|---|---|---|
-| `run P1` | Reads brief, data, guides; writes context, checklist, data overview, plan. No models. | Read `docs/plan.md`. Fix it. Write choices in `docs/decisions.md`. |
-| `approved, run P2` | Sets config + validation options, builds the dataset, prints the fold table, trains the baseline, runs sanity | **Read `src/eval.py` + the fold table.** Then `git commit -am "freeze eval"`. |
-| `run P3` | Skeptical leakage audit, no code changes | Act on every real suspicion before going on |
-| `run P4 with: <feature idea>` | One feature family on its own branch, score before → after, keep/drop | Merge only "keep" branches. Run 2–3 in parallel chats. |
-| `run P5` | Model comparison + recommended final setup | Agree the final setup |
-| `run P6` | **Insight hunt**: 3 findings with a number and a chart each | Pick the one insight the pitch is built on |
-| `run P7`, `run P8` | Plain-language reasons; ₸ impact with ForteBank's costs | Do the drivers make business sense? Are the costs from `docs/jury.md`? |
-| `run P9`, `run P10` | Demo app, README | Click through the demo yourself. Record a backup video. |
-| `run P11`, `run P12` | Deck content in `pitch/deck_content.md` (2-min + 5-min), tough Q&A | Paste into the deck, rehearse with a timer |
-| `run P13` | Fresh-clone check, checklist proof | Submit. Code freeze. |
-| `run PS` | Status: best score, open items, checklist gaps | Use at every shift change |
-
-Reasoning level: **High** for P1, P2, P3, P6. **Medium** for everything else (faster, saves limits).
-
-## 3. Rules that keep the solution honest
-- `src/eval.py` is frozen after the P2 checkpoint. Codex may only change it if you write "edit eval.py".
-- Every number on a slide must exist in `experiments.md` or `reports/`.
-- AUC above ~0.95 on bank data = assume leakage until `src.sanity` and P3 say otherwise.
-- One Codex chat per branch. The driver merges to `main`.
-- Commit after every checkpoint (`git commit -am "<what>"`), so any mistake is one `git reset` away.
-
-## 4. What the finished repo contains
-`reports/` (data overview, sanity, explanations, insights, impact, submission) · `models/` · `app/app.py` · `README.md` · `pitch/deck_content.md` · `experiments.md` · `CHECKLIST.md` all ticked.
+## You (solo) + Codex
+- Codex builds; you review every phase report and eval numbers (paste them to Claude for a second opinion).
+- Human-only tasks: create the RunPod pod, check URLs from your phone, film own clips (03:00), verify legal quotes on adilet.zan.kz (V9), hand in by 11:00.
+- Scoring assumptions are fixed in `docs/jury.md`; timeline and cut order in `GAMEPLAN.md`.

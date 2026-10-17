@@ -1,0 +1,137 @@
+{
+  "repo": "QuantTrio/Qwen3-VL-32B-Instruct-AWQ",
+  "revision": "c2d44b1376c73fa120fdb4e216c2ef61c1945498",
+  "license": "apache-2.0",
+  "files": [
+    {
+      "rfilename": "README.md",
+      "blobId": "b82ed44765d4ffc1f4cb9b744553220519edd721",
+      "size": 8503
+    },
+    {
+      "rfilename": "chat_template.json",
+      "blobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da",
+      "size": 5499
+    },
+    {
+      "rfilename": "config.json",
+      "blobId": "f1bb1ff516223350c9662de71fe379f557b18670",
+      "size": 1752
+    },
+    {
+      "rfilename": "configuration.json",
+      "blobId": "3a6d425685de8896b2bc8b59b671e41aea1d7bf3",
+      "size": 51
+    },
+    {
+      "rfilename": "generation_config.json",
+      "blobId": "7bb37933d2d86e4ceaabcc6540be989658f238e9",
+      "size": 269
+    },
+    {
+      "rfilename": "merges.txt",
+      "blobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+      "size": 1671839
+    },
+    {
+      "rfilename": "model-00001-of-00007.safetensors",
+      "blobId": "9d640f44c85ddc9dc16abfd02410266ca0b29313",
+      "size": 2958734384,
+      "lfs": {
+        "sha256": "81825c7c8ba6a8a681cc3b9351a2a13ca566bda1f3ec84c0aa82b59957da322a",
+        "size": 2958734384,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00002-of-00007.safetensors",
+      "blobId": "8b226965213020d84ab73c0c45922bcf478b18a8",
+      "size": 2971999496,
+      "lfs": {
+        "sha256": "2eaae89ec0faf54f2ce68303343a558379140b17963b2d70c340c885cd16cc40",
+        "size": 2971999496,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00003-of-00007.safetensors",
+      "blobId": "0dcf479225fe9b2140189cf5f10db852c855e22c",
+      "size": 2971999616,
+      "lfs": {
+        "sha256": "11909b5e0cd18644562368c019fefba04ad2708e3fac5c83fc57ca7e0fb7ec98",
+        "size": 2971999616,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00004-of-00007.safetensors",
+      "blobId": "fe9bb5c10f5e9f3b097d3f2937e6916d005159e1",
+      "size": 2993778792,
+      "lfs": {
+        "sha256": "4e18a8af024d0c40764b2cfe95b0ccce2493fcb42cfd3084de1fa3a3b072bc7d",
+        "size": 2993778792,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00005-of-00007.safetensors",
+      "blobId": "3c848d24976b2c85135c7358b6c729689ce9bdc7",
+      "size": 2969264624,
+      "lfs": {
+        "sha256": "0f8974d741222950c64013152860a9ef256c9c84ff8b3e67a96ec363ea07ffb1",
+        "size": 2969264624,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00006-of-00007.safetensors",
+      "blobId": "57b6f89fb154c7717918e96ecf38a01bce8dad27",
+      "size": 2767700088,
+      "lfs": {
+        "sha256": "e1c423c657c8fe201e71c16669524b6550cf2b87c2b2500217f755a83957719f",
+        "size": 2767700088,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00007-of-00007.safetensors",
+      "blobId": "f7bfddcf1fc1402aec79d7e8a36804e35ec74921",
+      "size": 2882601152,
+      "lfs": {
+        "sha256": "0b30cbf523ce65c063868151b681c0873df506f305bef99afbfc0a4f93444ae6",
+        "size": 2882601152,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model.safetensors.index.json",
+      "blobId": "a7fab6d605e9d2c89ab0537f5116877c062257aa",
+      "size": 184538
+    },
+    {
+      "rfilename": "preprocessor_config.json",
+      "blobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+      "size": 390
+    },
+    {
+      "rfilename": "tokenizer.json",
+      "blobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+      "size": 7032403
+    },
+    {
+      "rfilename": "tokenizer_config.json",
+      "blobId": "d3d3763207692c78780f4bf42d4dadf49a5c8012",
+      "size": 10868
+    },
+    {
+      "rfilename": "video_preprocessor_config.json",
+      "blobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+      "size": 385
+    },
+    {
+      "rfilename": "vocab.json",
+      "blobId": "4783fe10ac3adce15ac8f358ef5462739852c569",
+      "size": 2776833
+    }
+  ]
+}
