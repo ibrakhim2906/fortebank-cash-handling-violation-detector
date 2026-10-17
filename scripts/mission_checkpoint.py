@@ -36,6 +36,19 @@ def selected_recipe(honest,freeze=None):
     return value
 
 
+def repeat_source(groups,records):
+    """Select observed clean-API latency, not duration as a latency surrogate."""
+    by_id={g['group_id']:g for g in groups}
+    completed=[r for r in records if r.get('group_id') in by_id and r.get('status')=='done'
+               and type(r.get('elapsed_sec')) in [int,float]
+               and math.isfinite(r['elapsed_sec']) and r['elapsed_sec']>=0]
+    if completed:
+        slowest=max(completed,key=lambda r:(r['elapsed_sec'],r['group_id']))
+        return by_id[slowest['group_id']],dict(basis='slowest_completed_clean_api',
+                                             observed_clean_api_sec=slowest['elapsed_sec'])
+    return max(groups,key=lambda g:g['duration_sec']),dict(basis='longest_duration_fallback_no_completed_clean_api')
+
+
 def worst_case_repeats(longest,api,key_file,root,expected_recipe):
     """Run two real uploads through the same trace capture as the API sweep."""
     repeats=[]
@@ -76,7 +89,7 @@ def worst_case_repeats(longest,api,key_file,root,expected_recipe):
     qualification=dict(selected_recipe_sha256=expected_recipe,two_worst_case_runs_passed=passed,
                        qualified_worst_sec=max(observed) if passed else None,
                        observed_worst_sec=max(observed) if observed else None,
-                       scope='Two longest-recording API uploads only; full API and robustness scope remain separate.')
+                       scope='Two selected clean-source API uploads only; transformed worst cases and full API scope remain separate.')
     return repeats,qualification
 
 
@@ -118,8 +131,9 @@ def main(argv=None):
         if name=='reencode':reencoded_report=report
     augmented=dict(accuracy=sum(r['accuracy'] for r in transforms)/len(transforms),clean_accuracy=dev_api['accuracy'] if args.quick else api_all['accuracy'],all_requested_transforms_complete=not args.quick and all(r['n_videos']==40 and r['failed']==0 for r in transforms),transforms=transforms)
     (root/'augmented.json').write_text(json.dumps(augmented,indent=2)+'\n');summary['augmented']=augmented
-    longest=max(protocol['groups'],key=lambda g:g['duration_sec'])
-    repeats,qualification=worst_case_repeats(longest,args.api,args.key_file,root,expected_recipe)
+    selected,selection=repeat_source(protocol['groups'],all_rows)
+    selection['group_id']=selected['group_id'];summary['worst_case_repeat_selection']=selection
+    repeats,qualification=worst_case_repeats(selected,args.api,args.key_file,root,expected_recipe)
     summary['worst_case_repeats']=repeats
     summary['runtime_qualification']=qualification
     # All40 uploads reach the worker as anonymous source.mov; then re-encode

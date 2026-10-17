@@ -78,3 +78,22 @@ def test_checkpoint_freeze_is_explicit_and_missing_recipe_cannot_qualify():
     for malformed in [{},dict(recipe_sha256='not-a-hash'),dict(recipe_sha256=3)]:
         with pytest.raises(ValueError,match='frozen serving recipe'):
             checkpoint.selected_recipe({},malformed)
+
+
+def test_repeat_selection_uses_slowest_actual_clean_upload_even_for_short_video():
+    groups=[dict(group_id='long',duration_sec=140),dict(group_id='short',duration_sec=15)]
+    records=[dict(group_id='long',status='done',elapsed_sec=45),
+             dict(group_id='short',status='done',elapsed_sec=75)]
+    selected,basis=checkpoint.repeat_source(groups,records)
+    assert selected['group_id']=='short'
+    assert basis==dict(basis='slowest_completed_clean_api',observed_clean_api_sec=75)
+
+
+def test_repeat_selection_falls_back_only_without_usable_completed_clean_latency():
+    groups=[dict(group_id='long',duration_sec=140),dict(group_id='short',duration_sec=15)]
+    records=[dict(group_id='short',status='failed',elapsed_sec=300),
+             dict(group_id='long',status='done',elapsed_sec=float('nan')),
+             dict(group_id='unrequested',status='done',elapsed_sec=350)]
+    selected,basis=checkpoint.repeat_source(groups,records)
+    assert selected['group_id']=='long'
+    assert basis['basis']=='longest_duration_fallback_no_completed_clean_api'
