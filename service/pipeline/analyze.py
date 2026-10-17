@@ -7,9 +7,14 @@ from src.video_analysis import _check_deadline
 
 
 def recipe_fingerprint():
-    files=list((config.ROOT/'service/pipeline').glob('*.py'))+[config.ROOT/'service/rules.json',config.ROOT/'deploy/qwen3-vl-8b.json']
+    manifests={'qwen3-8b':'qwen3-vl-8b.json','qwen25-7b':'qwen25-vl-7b.json','qwen3-32b-awq':'qwen3-vl-32b-awq.json'}
+    profile=os.environ.get('AUDITOR_PROFILE','qwen3-8b')
+    if profile not in manifests:raise ValueError('Unknown pinned auditor profile')
+    files=list((config.ROOT/'service/pipeline').glob('*.py'))+[config.ROOT/'service/rules.json',config.ROOT/'deploy'/manifests[profile],
+          config.ROOT/'src/video_semantic.py',config.ROOT/'src/video_analysis.py',config.ROOT/'src/video_objects.py',config.ROOT/'scripts/pod_setup.sh']
     value={'sources':{str(p.relative_to(config.ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files)},
-           'seed':config.SEED,'auditor_call_timeout':os.environ.get('AUDITOR_CALL_TIMEOUT','10'),
+           'seed':config.SEED,'auditor_profile':profile,'auditor_call_timeout':os.environ.get('AUDITOR_CALL_TIMEOUT','10'),
+           'perception_mode':os.environ.get('PERCEPTION_MODE','full'),
            'model_endpoint':os.environ.get('VLLM_URL','http://127.0.0.1:8001')}
     return hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()
 
@@ -30,6 +35,17 @@ def cpu_fallback(path,deadline):
 
 def perception(path,deadline):
     from service.pipeline.frames import iter_frames
+    mode=os.environ.get('PERCEPTION_MODE','full')
+    if mode not in ['full','frames_only']:raise ValueError('Unknown perception mode')
+    if mode=='frames_only':
+        rules=json.loads((config.ROOT/'service/rules.json').read_text())
+        if any(spec.get('enabled') for spec in rules['types'].values()):
+            raise ValueError('Frame-only mode cannot bypass an enabled object rule')
+        samples=[dict(timestamp_sec=f['timestamp_sec'],source_frame_index=f['source_frame_index'],image=encode_jpeg(f['image']))
+                 for f in iter_frames(path,deadline)]
+        # No detector was run. Empty *observations* means no factual claims;
+        # never manufacture a zero-occupancy or absence timeline from it.
+        return dict(frames=[],engine='source_frames_only_no_object_observations'),samples
     from service.pipeline.detector import get_detector,_VERSION
     from service.pipeline.tracker import Tracker,foreground_people
     detector=get_detector();tracker=Tracker();rows=[];samples=[]
@@ -76,7 +92,7 @@ def analyze_detailed(path,deadline=None,*,requester=None):
         result=cpu_fallback(path,deadline)
         return result,dict(engine='mission-v1-degraded',recipe_sha256=recipe_fingerprint(),warnings=warnings,sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started)
     events=combine(rule_events,candidates,rules);result=build_result(events,frames,rules);_check_deadline(deadline)
-    return result,dict(engine='mission-v1',recipe_sha256=recipe_fingerprint(),scene=scene,facts=facts,auditor=audits,events=events,warnings=warnings,
+    return result,dict(engine='mission-v1',recipe_sha256=recipe_fingerprint(),perception_engine=observations.get('engine'),scene=scene,facts=facts,auditor=audits,events=events,warnings=warnings,
                        sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started,production_qualified=False)
 
 

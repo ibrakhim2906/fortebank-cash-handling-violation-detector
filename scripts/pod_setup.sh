@@ -8,11 +8,11 @@ if [ -z "${AUDITOR_PROFILE:-}" ] && [ -f data/processed/mission-runtime/active-p
   IFS= read -r mission_profile < data/processed/mission-runtime/active-profile.txt
 fi
 if [ "${1:-prepare}" = prepare ] && [ -n "${2:-}" ]; then mission_profile="$2";fi
-mission_quantization=();mission_dtype=bfloat16
+mission_quantization=();mission_dtype=bfloat16;mission_eager=(--enforce-eager);mission_call_timeout=30
 case "$mission_profile" in
 qwen3-8b) mission_model_dir=/workspace/models/qwen3-vl-8b;mission_manifest=deploy/qwen3-vl-8b.json;;
 qwen25-7b) mission_model_dir=/workspace/models/qwen25-vl-7b;mission_manifest=deploy/qwen25-vl-7b.json;;
-qwen3-32b-awq) mission_model_dir=/workspace/models/qwen3-vl-32b-awq;mission_manifest=deploy/qwen3-vl-32b-awq.json;mission_quantization=(--quantization awq_marlin);mission_dtype=float16;;
+qwen3-32b-awq) mission_model_dir=/workspace/models/qwen3-vl-32b-awq;mission_manifest=deploy/qwen3-vl-32b-awq.json;mission_quantization=(--quantization awq_marlin);mission_dtype=float16;mission_eager=();mission_call_timeout=60;;
 *) printf 'Unknown pinned auditor profile\n' >&2;exit 2;;
 esac
 case "${1:-prepare}" in
@@ -29,16 +29,19 @@ prepare)
   ;;
 model)
   export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1 VLLM_NO_USAGE_STATS=1 DO_NOT_TRACK=1
+  # Validation is opt-in and arms only after a warmup and an explicit signal.
+  export PYTHONPATH=/workspace/datathon-kit/tools/offline-guard:/workspace/datathon-kit
+  export OFFLINE_GUARD_CONTROL=1 OFFLINE_GUARD_LOG_DIR=/workspace/datathon-kit/data/processed/mission-runtime/network-proof
   mission_seed="$(uv run --frozen --no-dev python -c 'from src.config import SEED; print(SEED)')"
   exec /opt/vllm/bin/vllm serve "$mission_model_dir" \
     --served-model-name qwen-vl --host 127.0.0.1 --port 8002 --dtype "$mission_dtype" "${mission_quantization[@]}" \
     --seed "$mission_seed" \
     --max-model-len 16384 --limit-mm-per-prompt '{"image":16,"video":0}' \
-    --gpu-memory-utilization 0.86 --max-num-seqs 1 --enforce-eager --disable-log-requests \
+    --gpu-memory-utilization 0.86 --max-num-seqs 1 "${mission_eager[@]}" --disable-log-requests \
     --mm-processor-kwargs '{"min_pixels":3136,"max_pixels":262144}'
   ;;
 service)
-  export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 AUDITOR=on VLLM_URL=http://127.0.0.1:8002 AUDITOR_CALL_TIMEOUT=30
+  export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 AUDITOR=on VLLM_URL=http://127.0.0.1:8002 AUDITOR_CALL_TIMEOUT="$mission_call_timeout"
   export AUDITOR_PROFILE="$mission_profile" AUDITOR_MANIFEST="$mission_manifest"
   export API_KEY="$(cat data/processed/runpod-service-v1/api-key.txt)"
   export JOBS_DIR=/workspace/datathon-kit/data/processed/mission-service/jobs
@@ -47,15 +50,22 @@ service)
 supervise)
   mission_target="${2:?model or service}";mission_child="${3:-}"
   case "$mission_target" in model|service) ;; *) exit 2;; esac
+  exec 9>"data/processed/mission-runtime/$mission_target-supervisor.lock"
+  flock -w 30 9 || exit 0
+  printf '%s\n' "$$" > "data/processed/mission-runtime/$mission_target-supervisor.pid"
   trap 'if [ -n "$mission_child" ]; then kill -TERM "$mission_child" 2>/dev/null || true; fi; exit 0' TERM INT
   # Optionally adopt the already healthy owned model process, avoiding a load.
-  while [ -n "$mission_child" ] && kill -0 "$mission_child" 2>/dev/null; do sleep 2; done
+  while [ -n "$mission_child" ] && kill -0 "$mission_child" 2>/dev/null; do
+    mission_state="$(ps -p "$mission_child" -o stat= || true)"
+    if [ -z "$mission_state" ] || [ "${mission_state:0:1}" = Z ]; then break;fi
+    sleep 2 9>&-
+  done
   while true; do
-    if [ -f "data/processed/mission-runtime/pause-$mission_target" ]; then sleep 2;continue;fi
-    bash "$0" "$mission_target" & mission_child=$!
+    if [ -f "data/processed/mission-runtime/pause-$mission_target" ]; then sleep 2 9>&-;continue;fi
+    bash "$0" "$mission_target" 9>&- & mission_child=$!
     printf '%s\n' "$mission_child" > "data/processed/mission-runtime/$mission_target-child.pid"
     wait "$mission_child" || true
-    mission_child='';sleep 2
+    mission_child='';sleep 2 9>&-
   done
   ;;
 *) exit 2;;

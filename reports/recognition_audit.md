@@ -1,0 +1,23 @@
+# Recognition audit —22:14local, MISSION
+
+The first baseline is a failed recognition reference,not an excellent solution. The task remains video-based cash-operation deviations across14types. The audit prioritizes implementation/context errors before more model size.
+
+| Finding | Evidence | Consequence | Controlled correction |
+|---|---|---|---|
+|Focused confirmation is not isolated to its candidate|auditor.py appends the entire TYPE_PREDICATES catalogue to every focused question; a food/drink confirmation describes cash instead|False alerts and unchecked category drift|Only the requested physical predicate in the focused prompt; typed prerequisites and independent confirmation|
+|Omission checks use whole-file size as a rejection gate|auditor.py rejects every omission when len(frames)>16,at2fps|Longer than roughly8s cannot emit no-ID/no-receipt/no-count,even if a short relevant phase is fully visible|Segment and densely cover the relevant phase; retain UNKNOWN for offscreen/electronic/manual/collection exceptions|
+|Focused sampling often stays sparse|Window spans onset through distant evidence,then choose16 uniformly again|No real densification around the onset; poor timing|Dense onset neighborhood plus separate later persistence/context frames|
+|Unused detection work consumes the budget|analyze.py computes YOLOX/tracks/facts; all CPU rules disabled; auditor receives images,not facts|CPU latency without a current recognition contribution|Reversible frame-only mode when no object rule is enabled; preserve detector path and all unknown states|
+|Generic detector misses required object vocabulary|Expanded COCO has no cash,door,safe or key class|Those facts remain unknown; zero rule-based violation detections|Use qualified visual observations/crops,or evaluate licensed open-vocabulary grounding only if it contributes measurably|
+|Video capability is unused|vlm.py sends image_url items only; pod_setup.sh sets video:0|Potentially loses native temporal processing; not proof that images are unsupported|Compare the SAME model with bounded native video input,source clocks and synthetic order/motion controls|
+|Cash predicate covers only departure|TYPE_PREDICATES requires the worker to leave; team labels also include previously accepted cash stored outside designated lockable storage|Expected storage events can be unreachable under the current predicate|Separate active processing from completed-operation storage,with visible contents/context; never infer cash from an unknown bag|
+|Recipe identity misses external prompt source|recipe_fingerprint hashes pipeline files,not src/video_semantic.py supplying predicates|A future predicate edit might reuse a stale recipe identity|Include actual prompt/sampling helper sources and startup configuration in recipe provenance|
+|32B operating limit prevents measurement|Eager and compiled trials hit30s/modelcall; these are numeric fallback,not32Baccuracy|Cannot compare recognition by counting fallback completions|One bounded streaming diagnostic before deciding timeout/token/input changes; retain185s total bound|
+
+Image transport is not assumed broken:12old8B request/response replays reproduce exact API outputs (payload hashes include actualJPEGbytes),and8B/32B pass synthetic first/last color controls.7B fails2ordercontrols and is unqualified. Further video-input checks must separately verify decoded source chronology and original evidence alignment.
+
+No new supervision or inference exception is authorized by this audit. No filenames,labels,source fingerprints or duration shortcuts may decide a violation. Previously-seen10-video reserve remains regression-only. Each correction gets its own score/recall/false-alarm/time comparison; no unsupported physical/legal claim is added to reach a number.
+
+Additional code-path findings to cover with regression tests: a later focused-call failure currently discards earlier verified events; insufficient visibility raises a RuntimeError subtype outside analyze.py's fallback catch; the second tiny-detail confirmation lacks its own source-index bounds check. Fix these without treating an incomplete/unknown audit as a clean result.
+
+Native-input comparison references: [Qwen3-VL official processor/video guidance](https://github.com/QwenLM/Qwen3-VL), [vLLM0.11multimodal serving](https://docs.vllm.ai/en/v0.11.0/features/multimodal_inputs.html). The installed vLLM OpenCV loader itself warns about timestamp calculation after fixed-count subsampling; test real source clocks and the dynamic loader before accepting native timecodes. This loader issue does not explain the existing still-image baseline's errors, since that path uses our own source-time sampler.

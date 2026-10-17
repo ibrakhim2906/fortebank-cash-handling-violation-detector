@@ -56,3 +56,30 @@ def test_boolean_cannot_be_a_source_frame_index():
     from pydantic import ValidationError
     value=candidate();value['onset_frame']=True
     with pytest.raises(ValidationError):a.Candidate.model_validate(value)
+
+
+def test_different_model_profiles_cannot_share_recipe_provenance(monkeypatch):
+    monkeypatch.setenv('AUDITOR_PROFILE','qwen3-8b');first=p.recipe_fingerprint()
+    monkeypatch.setenv('AUDITOR_PROFILE','qwen25-7b');second=p.recipe_fingerprint()
+    monkeypatch.setenv('AUDITOR_PROFILE','qwen3-32b-awq');third=p.recipe_fingerprint()
+    assert len({first,second,third})==3
+    monkeypatch.setenv('AUDITOR_PROFILE','unverified-model')
+    with pytest.raises(ValueError):p.recipe_fingerprint()
+
+
+def test_frame_only_mode_preserves_source_images_and_does_not_claim_absence(monkeypatch):
+    from service.pipeline import frames as decoder,detector
+    image=np.arange(80*60*3,dtype=np.uint8).reshape(80,60,3)
+    source=[dict(timestamp_sec=1.25,source_frame_index=37,image=image)]
+    monkeypatch.setenv('PERCEPTION_MODE','frames_only')
+    monkeypatch.setattr(decoder,'iter_frames',lambda *args:iter(source))
+    monkeypatch.setattr(detector,'get_detector',lambda:(_ for _ in ()).throw(AssertionError('Unused detector must not run')))
+    observations,samples=p.perception('anonymous.mov',time.monotonic()+20)
+    assert observations['frames']==[]
+    assert samples==[dict(timestamp_sec=1.25,source_frame_index=37,image=p.encode_jpeg(image))]
+
+
+def test_frame_only_cannot_silently_disable_an_enabled_object_rule(monkeypatch,tmp_path):
+    monkeypatch.setenv('PERCEPTION_MODE','frames_only');monkeypatch.setattr(p.config,'ROOT',tmp_path)
+    (tmp_path/'service').mkdir();(tmp_path/'service/rules.json').write_text(json.dumps(dict(types=dict(cash_left_out=dict(enabled=True)))))
+    with pytest.raises(ValueError,match='enabled object rule'):p.perception('anonymous.mov',time.monotonic()+20)

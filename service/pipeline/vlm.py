@@ -45,7 +45,7 @@ def ask(frames,prompt,response_model,deadline,*,requester=None,max_tokens=768):
         remaining=deadline-time.monotonic()
         if remaining<=1:raise TimeoutError('Auditor budget exhausted')
         call_limit=float(os.environ.get('AUDITOR_CALL_TIMEOUT','10'))
-        if not math.isfinite(call_limit) or not 1<=call_limit<=30:raise ValueError('Invalid bounded auditor call timeout')
+        if not math.isfinite(call_limit) or not 1<=call_limit<=60:raise ValueError('Invalid bounded auditor call timeout')
         response=(requester or post)(url,payload,min(call_limit,remaining-0.5))
         try:
             choices=response['choices']

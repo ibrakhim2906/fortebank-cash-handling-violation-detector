@@ -7,7 +7,8 @@ from src import config
 
 
 def run(args,output):
-    command=['uv','run','--offline','python','-m','scripts.eval_video',*args,'--json',str(output)]
+    command=['uv','run','--offline','python','-m','scripts.run_mission_eval',
+             '--trace-dir',str(output.with_suffix('.traces')),*args,'--json',str(output)]
     subprocess.run(command,check=True,stdout=subprocess.DEVNULL)
     return json.loads(output.read_text())
 
