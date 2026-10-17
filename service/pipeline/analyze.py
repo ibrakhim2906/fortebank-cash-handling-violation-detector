@@ -7,7 +7,8 @@ from src.video_analysis import _check_deadline
 
 
 def recipe_fingerprint():
-    manifests={'qwen3-8b':'qwen3-vl-8b.json','qwen25-7b':'qwen25-vl-7b.json','qwen3-32b-awq':'qwen3-vl-32b-awq.json'}
+    manifests={'qwen3-8b':'qwen3-vl-8b.json','qwen25-7b':'qwen25-vl-7b.json','qwen3-32b-awq':'qwen3-vl-32b-awq.json',
+               'qwen3-30b-a3b-awq':'qwen3-vl-30b-a3b-awq.json'}
     profile=os.environ.get('AUDITOR_PROFILE','qwen3-8b')
     if profile not in manifests:raise ValueError('Unknown pinned auditor profile')
     files=list((config.ROOT/'service/pipeline').glob('*.py'))+[config.ROOT/'service/rules.json',config.ROOT/'deploy'/manifests[profile],
@@ -15,13 +16,22 @@ def recipe_fingerprint():
     value={'sources':{str(p.relative_to(config.ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files)},
            'seed':config.SEED,'auditor_profile':profile,'auditor_call_timeout':os.environ.get('AUDITOR_CALL_TIMEOUT','10'),
            'perception_mode':os.environ.get('PERCEPTION_MODE','full'),
+           'auditor_resolution':os.environ.get('AUDITOR_RESOLUTION','standard'),
+           'auditor_scan':os.environ.get('AUDITOR_SCAN','full'),
+           'auditor_workflow':os.environ.get('AUDITOR_WORKFLOW','original'),
+           'auditor_confirmation':os.environ.get('AUDITOR_CONFIRMATION','strict'),
+           'auditor_frames':os.environ.get('AUDITOR_FRAMES','16'),
+           'auditor_context':os.environ.get('AUDITOR_CONTEXT','16384'),
            'model_endpoint':os.environ.get('VLLM_URL','http://127.0.0.1:8001')}
     return hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()
 
 
 def encode_jpeg(image):
+    mode=os.environ.get('AUDITOR_RESOLUTION','standard')
+    if mode not in ['standard','source']:raise ValueError('Unknown auditor image resolution')
+    edge=1024 if mode=='source' else 720
     h,w=image.shape[:2]
-    if max(h,w)>720:image=cv2.resize(image,(round(w*720/max(h,w)),round(h*720/max(h,w))),interpolation=cv2.INTER_AREA)
+    if max(h,w)>edge:image=cv2.resize(image,(round(w*edge/max(h,w)),round(h*edge/max(h,w))),interpolation=cv2.INTER_AREA)
     ok,jpeg=cv2.imencode('.jpg',image,[cv2.IMWRITE_JPEG_QUALITY,88])
     if not ok:raise ValueError('Evidence encoding failed')
     return jpeg.tobytes()
@@ -79,21 +89,27 @@ def analyze_detailed(path,deadline=None,*,requester=None):
     from service.pipeline.scene import calibrate
     from service.pipeline.facts import timeline
     from service.pipeline.engine import evaluate
-    from service.pipeline.auditor import confirmed_observations
+    from service.pipeline.auditor import confirmed_observations,tiled_observations,UnusableVisibilityError
     from service.pipeline.fuse import combine
     rules=json.loads((config.ROOT/'service/rules.json').read_text())
     observations,frames=perception(path,deadline-30);perception_sec=time.monotonic()-started
     scene=calibrate(observations);facts=timeline(observations,scene)
     rule_events=evaluate(facts,rules);audits=[];warnings=[]
     try:
-        candidates,audits=confirmed_observations(frames,deadline-20,requester=requester)
-    except (OSError,TimeoutError,ValueError,KeyError) as exc:
+        mode=os.environ.get('AUDITOR_SCAN','full')
+        if mode not in ['full','tiled']:raise ValueError('Unknown temporal scan mode')
+        candidates,audits=(tiled_observations if mode=='tiled' else confirmed_observations)(frames,deadline-20,requester=requester)
+        if not candidates and not rule_events and any(e['stage']=='audit_incomplete' for e in audits):
+            raise TimeoutError('Incomplete audit without confirmed positive evidence')
+    except (OSError,TimeoutError,ValueError,KeyError,UnusableVisibilityError) as exc:
         warnings.append('Auditor unavailable/invalid; weak numeric CPU fallback used: '+type(exc).__name__)
         result=cpu_fallback(path,deadline)
         return result,dict(engine='mission-v1-degraded',recipe_sha256=recipe_fingerprint(),warnings=warnings,sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started)
+    complete=not any(e['stage']=='audit_incomplete' for e in audits)
+    if not complete:warnings.append('Only supported observations are returned; the temporal audit was incomplete.')
     events=combine(rule_events,candidates,rules);result=build_result(events,frames,rules);_check_deadline(deadline)
     return result,dict(engine='mission-v1',recipe_sha256=recipe_fingerprint(),perception_engine=observations.get('engine'),scene=scene,facts=facts,auditor=audits,events=events,warnings=warnings,
-                       sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started,production_qualified=False)
+                       sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started,audit_complete=complete,production_qualified=False)
 
 
 def analyze(path,deadline=None):

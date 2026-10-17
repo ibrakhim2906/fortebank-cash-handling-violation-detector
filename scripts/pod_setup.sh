@@ -9,10 +9,13 @@ if [ -z "${AUDITOR_PROFILE:-}" ] && [ -f data/processed/mission-runtime/active-p
 fi
 if [ "${1:-prepare}" = prepare ] && [ -n "${2:-}" ]; then mission_profile="$2";fi
 mission_quantization=();mission_dtype=bfloat16;mission_eager=(--enforce-eager);mission_call_timeout=30
+mission_images="${AUDITOR_FRAMES:-16}";mission_context="${AUDITOR_CONTEXT:-16384}"
+case "$mission_images:$mission_context" in 16:16384|16:32768|64:32768) ;; *) printf 'Unqualified image/context capacity\n' >&2;exit 2;; esac
 case "$mission_profile" in
 qwen3-8b) mission_model_dir=/workspace/models/qwen3-vl-8b;mission_manifest=deploy/qwen3-vl-8b.json;;
 qwen25-7b) mission_model_dir=/workspace/models/qwen25-vl-7b;mission_manifest=deploy/qwen25-vl-7b.json;;
 qwen3-32b-awq) mission_model_dir=/workspace/models/qwen3-vl-32b-awq;mission_manifest=deploy/qwen3-vl-32b-awq.json;mission_quantization=(--quantization awq_marlin);mission_dtype=float16;mission_eager=();mission_call_timeout=60;;
+qwen3-30b-a3b-awq) mission_model_dir=/workspace/models/qwen3-vl-30b-a3b-awq;mission_manifest=deploy/qwen3-vl-30b-a3b-awq.json;mission_quantization=(--quantization awq_marlin);mission_dtype=float16;mission_eager=();mission_call_timeout=60;;
 *) printf 'Unknown pinned auditor profile\n' >&2;exit 2;;
 esac
 case "${1:-prepare}" in
@@ -36,7 +39,7 @@ model)
   exec /opt/vllm/bin/vllm serve "$mission_model_dir" \
     --served-model-name qwen-vl --host 127.0.0.1 --port 8002 --dtype "$mission_dtype" "${mission_quantization[@]}" \
     --seed "$mission_seed" \
-    --max-model-len 16384 --limit-mm-per-prompt '{"image":16,"video":0}' \
+    --max-model-len "$mission_context" --limit-mm-per-prompt "{\"image\":$mission_images,\"video\":0}" \
     --gpu-memory-utilization 0.86 --max-num-seqs 1 "${mission_eager[@]}" --disable-log-requests \
     --mm-processor-kwargs '{"min_pixels":3136,"max_pixels":262144}'
   ;;

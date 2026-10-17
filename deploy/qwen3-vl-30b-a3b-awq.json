@@ -1,0 +1,133 @@
+{
+  "repo": "QuantTrio/Qwen3-VL-30B-A3B-Instruct-AWQ",
+  "revision": "a5ea10732e2c9330957864ece3ec66d806a4b00d",
+  "license": "apache-2.0",
+  "files": [
+    {
+      "rfilename": "README.md",
+      "blobId": "904afad49e0d499a84f1faccca5a0cca3495a8e2",
+      "size": 8144
+    },
+    {
+      "rfilename": "chat_template.json",
+      "blobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da",
+      "size": 5499
+    },
+    {
+      "rfilename": "config.json",
+      "blobId": "a2847bd2016088a43d1bb12237d493c000998d0a",
+      "size": 1961
+    },
+    {
+      "rfilename": "configuration.json",
+      "blobId": "3a6d425685de8896b2bc8b59b671e41aea1d7bf3",
+      "size": 51
+    },
+    {
+      "rfilename": "generation_config.json",
+      "blobId": "7bb37933d2d86e4ceaabcc6540be989658f238e9",
+      "size": 269
+    },
+    {
+      "rfilename": "merges.txt",
+      "blobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+      "size": 1671839
+    },
+    {
+      "rfilename": "model-00001-of-00006.safetensors",
+      "blobId": "ee033263fce7aabc6f4e0307dab9459cbc88a073",
+      "size": 3000764080,
+      "lfs": {
+        "sha256": "f1b85a58d250a7684d910ebe5804b54baf3c779d36620ff6da40c0a56fea57b6",
+        "size": 3000764080,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00002-of-00006.safetensors",
+      "blobId": "c9b20557836c0e43de6e0b23d9799f769860cbee",
+      "size": 3001417160,
+      "lfs": {
+        "sha256": "3d1f9b536862314823d0ebae38ff4fad2e2fbd8d5c0c7747f7d3272a624699d2",
+        "size": 3001417160,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00003-of-00006.safetensors",
+      "blobId": "58dce6c4ee2b9835f32a4addd669841accb07e64",
+      "size": 3001132880,
+      "lfs": {
+        "sha256": "14c74063c6f61e207573c6521ca77456db1bcb9c4641fbc1ebfc3bd7a3ed2980",
+        "size": 3001132880,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00004-of-00006.safetensors",
+      "blobId": "fa381d97000d6aa65b0b02027b6edf1e67a01626",
+      "size": 3001371840,
+      "lfs": {
+        "sha256": "797ecde7495593d55121235a6bb2cc484a0eaf110b6ba74b30797700898d7e27",
+        "size": 3001371840,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00005-of-00006.safetensors",
+      "blobId": "34d14c1ad6bde34b515d8a3c1fc13a46e60cbd24",
+      "size": 3001424880,
+      "lfs": {
+        "sha256": "ad04cbd1635a7af08a79f08a39792a317caf494100dda7a09a7d219ba2f91af4",
+        "size": 3001424880,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model-00006-of-00006.safetensors",
+      "blobId": "54cb43a1a545a5258397bc9fc0745fba5bccd4b9",
+      "size": 2881490336,
+      "lfs": {
+        "sha256": "e4299ea234b36965055a2a31282fc29ea3f37928970e421844d779cb17b0fa57",
+        "size": 2881490336,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "model.safetensors.index.json",
+      "blobId": "1a49e54a54ea30ee3d9be12b5ec0493c6acb2850",
+      "size": 5948346
+    },
+    {
+      "rfilename": "preprocessor_config.json",
+      "blobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+      "size": 390
+    },
+    {
+      "rfilename": "tokenizer.json",
+      "blobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+      "size": 7032403
+    },
+    {
+      "rfilename": "tokenizer_config.json",
+      "blobId": "d3d3763207692c78780f4bf42d4dadf49a5c8012",
+      "size": 10868
+    },
+    {
+      "rfilename": "video_preprocessor_config.json",
+      "blobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+      "size": 385
+    },
+    {
+      "rfilename": "vocab.json",
+      "blobId": "4783fe10ac3adce15ac8f358ef5462739852c569",
+      "size": 2776833
+    }
+  ],
+  "license_checked_utc": "2026-10-17",
+  "parent": {
+    "repo": "Qwen/Qwen3-VL-30B-A3B-Instruct",
+    "revision": "9c4b90e1e4ba969fd3b5378b57d966d725f1b86c",
+    "license": "apache-2.0"
+  }
+}

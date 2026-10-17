@@ -9,6 +9,7 @@ PROFILES={
     'qwen3-8b':dict(repo=REPO,revision=REVISION,manifest='deploy/qwen3-vl-8b.json',directory='/workspace/models/qwen3-vl-8b',architecture='Qwen3VLForConditionalGeneration'),
     'qwen25-7b':dict(repo='Qwen/Qwen2.5-VL-7B-Instruct',revision='cc594898137f460bfe9f0759e9844b3ce807cfb5',manifest='deploy/qwen25-vl-7b.json',directory='/workspace/models/qwen25-vl-7b',architecture='Qwen2_5_VLForConditionalGeneration'),
     'qwen3-32b-awq':dict(repo='QuantTrio/Qwen3-VL-32B-Instruct-AWQ',revision='c2d44b1376c73fa120fdb4e216c2ef61c1945498',manifest='deploy/qwen3-vl-32b-awq.json',directory='/workspace/models/qwen3-vl-32b-awq',architecture='Qwen3VLForConditionalGeneration'),
+    'qwen3-30b-a3b-awq':dict(repo='QuantTrio/Qwen3-VL-30B-A3B-Instruct-AWQ',revision='a5ea10732e2c9330957864ece3ec66d806a4b00d',manifest='deploy/qwen3-vl-30b-a3b-awq.json',directory='/workspace/models/qwen3-vl-30b-a3b-awq',architecture='Qwen3VLMoeForConditionalGeneration'),
 }
 
 

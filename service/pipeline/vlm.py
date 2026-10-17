@@ -23,9 +23,15 @@ def duplicate_guard(pairs):
     return result
 
 
+def frame_limit():
+    value=int(os.environ.get('AUDITOR_FRAMES','16'))
+    if value not in [16,64]:raise ValueError('Unsupported auditor frame capacity')
+    return value
+
+
 def ask(frames,prompt,response_model,deadline,*,requester=None,max_tokens=768):
     started=time.monotonic()
-    if not 1<=len(frames)<=16:raise ValueError('Auditor image count outside bound')
+    if not 1<=len(frames)<=frame_limit():raise ValueError('Auditor image count outside bound')
     content=[dict(type='text',text=prompt)]
     for i,f in enumerate(frames):
         t=f['timestamp_sec'];image=f['image']
@@ -33,6 +39,9 @@ def ask(frames,prompt,response_model,deadline,*,requester=None,max_tokens=768):
         content += [dict(type='text',text=f'Frame {i}; actual source time {t:.3f} seconds.'),dict(type='image_url',image_url=dict(url='data:image/jpeg;base64,'+base64.b64encode(image).decode()))]
     body=dict(model=MODEL,messages=[dict(role='system',content=SYSTEM),dict(role='user',content=content)],temperature=0,seed=config.SEED,max_tokens=max_tokens,stream=False,
               response_format=dict(type='json_schema',json_schema=dict(name='observations',strict=True,schema=response_model.model_json_schema())))
+    resolution=os.environ.get('AUDITOR_RESOLUTION','standard')
+    if resolution not in ['standard','source']:raise ValueError('Unknown auditor image resolution')
+    if resolution=='source':body['mm_processor_kwargs']=dict(min_pixels=3136,max_pixels=524288)
     payload=json.dumps(body,ensure_ascii=False,allow_nan=False,separators=(',',':')).encode();request_hash=hashlib.sha256(payload).hexdigest()
     url=endpoint()
     def post(url,payload,timeout):
