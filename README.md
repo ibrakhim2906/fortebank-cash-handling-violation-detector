@@ -2,7 +2,9 @@
 
 A self-hosted video-review service with typed timecoded concerns and original-frame evidence. Start with [review context](docs/REVIEW_CONTEXT.md), then `service/pipeline/analyze.py`, `auditor.py`, `vlm.py` and `state_ledger.py`. The selected recipe is32B AWQ on one A40,16images/16384context/60s call ceiling, storage veto enabled.
 
-Measured DEV result:23/30correct verdicts,TP12/FN4/FP3,5/16events within±2s. These results fall short of the desired recognition standard. All40supplied recordings were historically reviewed; the10-video reserve is prospective regression. A new40-video actual API qualification is running, with no terminal outcome asserted in this snapshot.
+Actual API qualification completed **42/42 jobs through the primary path, with 0 failed jobs**: 40 unique recordings and two repeats of the slowest source. This establishes operability, not recognition quality. On the 40 recordings, verdict accuracy was **27/40** (TP13/FN8/FP5/TN14), with **6/22 annotated events within ±2 seconds**. DEV30 reproduced 23/30 verdicts and 5/16 time hits. The previously seen 10-video regression subset scored 4/10 verdicts, 1/5 positive-video recall and 2 false positives. All 40 recordings were historically reviewed; none of these results is independent validation or an official jury score.
+
+Worst measured processing time was 72.984294733 seconds; the two actual slowest-source repeats took 64.933887418 and 65.902824726 seconds. Recognition remains materially below the target despite successful API execution.
 
 This snapshot contains code, tests, UI, approved dependency manifests and public license notices. It excludes bank media, labels, detailed per-video reviews/errors, keys, job evidence, weights and downloaded executables. It is suitable for static review; it does not include the external model or numeric fallback artifact needed for complete inference.
 
@@ -15,3 +17,5 @@ Public-export test scope: four named integration tests have explicit conditional
 `deploy/mission-best.env` records the exact selected image-list serving environment for code review; it does not activate the unapplied native-video proposal. Its exported SHA256 is recorded in the manifest after the selected configuration file is installed.
 
 Actual public-export verification: **1196passed,6skipped,12warnings in45.55s**. The four added conditional skips apply only to the explicitly omitted private fixtures/defaults; two other skips already existed. This run used the existing approved uv environment, twoCPU affinity and twoBLAS/OpenMP threads. It verifies source behavior with synthetic fixtures, not bank recognition or a working downloaded model.
+
+Recent DEV timing diagnostics found a coarse sampled frame within 2 seconds of every one of 16 anchors (15 within 1 second). This is an oracle timestamp-proximity check, not proof that the action was visible or recognized. Correct types appeared somewhere for 9/16 anchors: 5 at the right time and 4 at the wrong time; 7 had no relevant type. Sparse timing quantization alone does not explain the recognition gap. One-factor refinement is in progress and a source-resolution experiment is planned; neither is a measured improvement yet. The initial unapplied native-video proposal remains GPU-untested and covers at most 12/16 DEV anchor types, so it is not a complete final solution.

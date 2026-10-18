@@ -8,7 +8,19 @@ One self-managed NVIDIA A40 48GB runs Qwen3-VL-32B-Instruct-AWQ through vLLM. Th
 
 ## Actual aggregate quality
 
-Fixed30DEV groups:23/30correct video verdicts, TP12, FN4, FP3, with5/16annotated events localized within±2seconds. This is measured development performance, not an official jury score or90–95quality. All40supplied unique recordings were historically reviewed; the fixed30/10split is development/prospective regression, not an independent untouched test. Duplicate aliases are grouped by full-content SHA. No private per-video label/error table or footage is included here. A new actual40-video public-API qualification is currently running; this export does not claim its terminal result.
+The completed actual public-API run processed 40 unique recordings plus two repeats: 42/42 primary-path jobs, zero failed jobs. Operability and recognition are separate findings. Across the 40 recordings, verdict accuracy was 27/40: TP13, FN8, FP5, TN14. Only 6/22 annotated events were localized within ±2 seconds. DEV30 reproduced 23/30 correct verdicts (TP12/FN4/FP3/TN11), with 5/16 annotated events within ±2 seconds. The previously seen 10-recording regression subset scored 4/10 correct verdicts, 1/5 positive-video recall and two false positives.
+
+Worst processing time was 72.984294733 seconds. Two additional actual repetitions of the slowest source took 64.933887418 and 65.902824726 seconds. These are measured timings, not a latency guarantee for unseen inputs.
+
+All 40 supplied unique recordings were historically reviewed. The fixed 30/10 split supports development and regression checks, not independent untouched validation. Duplicate aliases are grouped by full-content SHA. No private per-video labels, error tables, footage or job outputs are included. These results fall short of the desired recognition standard; they are not an official jury score.
+
+## Recognition diagnosis and experiment status
+
+Using actual saved source timestamps, all 16 DEV anchors had a nearest coarse frame within 2 seconds, and 15 within 1 second. This oracle proximity calculation does not establish action visibility or model correctness. A relevant correct type appeared anywhere for 9/16 anchors: five had correct timing and four had wrong timing, with errors of 8.5, 12, 25.4667 and 25.5 seconds. The other seven had no relevant type: four missed positive videos and three positive verdicts based only on an unrelated type. Consequently, a correct binary verdict alone can mask a recognition failure, and timestamp quantization alone does not explain the localization gap.
+
+Code audit confirmed that the initial omission coverage gate blocked clips longer than 8 seconds, tiled mode passed allow_omissions=False, and source-resolution requests used max_pixels=524288. These are implementation facts, not demonstrated remedies. The earlier dense 64-frame trial regressed from 20/30 to 19/30 verdict accuracy under its original comparison recipe. An exact one-factor refinement experiment is currently running; a source-resolution experiment is next. Neither has a winning result claimed here.
+
+The native-video proposal is unapplied and remains untested on the GPU. Its initial eight-kind taxonomy excludes four DEV anchor types (no_receipt, no_id_check, keys_left_in_safe, workstation_unlocked), placing initial typed/time coverage at a maximum of 12/16 even with perfect recognition of eligible anchors. It cannot constitute a complete final solution. Any later omission extension requires separately demonstrated dense actual source coverage and visibly bounded procedure phases; missing or ambiguous evidence cannot become an absence claim.
 
 ## API contract
 

@@ -34,8 +34,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "f03e38f62d820453f810f397bd381ae030ba35fa4e1538e0fd8bf5690f452513",
-      "bytes": 3013,
+      "sha256": "971c5fbe68115d41ffb684b7f7ec17d540499e3f7f660b55f2280854ad89d137",
+      "bytes": 4205,
       "generated_sanitized_document": true
     },
     {
@@ -104,8 +104,8 @@
     },
     {
       "path": "docs/REVIEW_CONTEXT.md",
-      "sha256": "4baa6de0777be809ee5f930960f276a274826934dfb61dd0a268723390a4fb79",
-      "bytes": 4396,
+      "sha256": "be3ac4f8cf36288845dd74b7b509a1c8ceb65ec45ddd89c2fb73424b9f822ebc",
+      "bytes": 6754,
       "generated_sanitized_document": true
     },
     {
@@ -1593,7 +1593,7 @@
     }
   ],
   "file_count_excluding_manifest": 227,
-  "total_bytes_excluding_manifest": 2212730,
+  "total_bytes_excluding_manifest": 2216280,
   "export_only_redactions": {
     "scripts/check_case_observations.py": [
       "NAMES",
@@ -1657,5 +1657,59 @@
     "public_recipe_sha256": "d4c64e727fab0890048f332a03e90e1fae61343e3ddb39afce1bbad864140bfc",
     "matches_actual_selected_deployment": true,
     "method": "Imported public service.pipeline.analyze.recipe_fingerprint with deploy/mission-best.env, compared to private actual deployment freeze."
+  },
+  "actual_api_qualification": {
+    "jobs": 42,
+    "unique_recordings": 40,
+    "slowest_source_repeats": 2,
+    "primary_jobs": 42,
+    "failed_jobs": 0,
+    "all40_verdicts": {
+      "correct": 27,
+      "total": 40,
+      "tp": 13,
+      "fn": 8,
+      "fp": 5,
+      "tn": 14
+    },
+    "all40_time_hits_within_2_sec": {
+      "hits": 6,
+      "anchors": 22
+    },
+    "dev30": {
+      "correct": 23,
+      "total": 30,
+      "time_hits_within_2_sec": 5,
+      "anchors": 16
+    },
+    "previously_seen_regression10": {
+      "correct": 4,
+      "total": 10,
+      "positive_video_recall_hits": 1,
+      "positive_videos": 5,
+      "false_positives": 2
+    },
+    "worst_processing_sec": 72.984294733,
+    "slowest_source_repeat_processing_sec": [
+      64.933887418,
+      65.902824726
+    ],
+    "independent_validation": false,
+    "all_recordings_historically_reviewed": true,
+    "scope": "API operability is separate from recognition quality; sanitized measured aggregates only."
+  },
+  "recognition_diagnostic": {
+    "dev_anchors": 16,
+    "nearest_coarse_frame_within_2_sec": 16,
+    "nearest_coarse_frame_within_1_sec": 15,
+    "correct_type_anywhere": 9,
+    "correct_type_and_time": 5,
+    "correct_type_wrong_time": 4,
+    "no_relevant_type": 7,
+    "oracle_proximity_is_visibility_or_accuracy_proof": false,
+    "initial_native_scope_ceiling": 12,
+    "native_gpu_tested": false,
+    "refinement_status": "running; no improvement claimed",
+    "source_resolution_status": "planned; no improvement claimed"
   }
 }
