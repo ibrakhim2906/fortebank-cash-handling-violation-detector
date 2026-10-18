@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "snapshot_label": "18 Oct 2026 · checkpoint 1",
+  "snapshot_label": "18 Oct 2026 · checkpoint 3 + rescue",
   "target_accuracy": 0.9,
   "target_status": "aspirational_not_achieved",
   "independent_test": false,
@@ -64,25 +64,58 @@
       "source_sha256": "cefbee608f4e97fb74cf9305691fc354ffd14ca2e738615e06902e835201d527",
       "correct": 20,
       "localized_2s": 5
+    },
+    {
+      "n_videos": 30,
+      "accuracy": 0.7666666666666667,
+      "recall": 0.75,
+      "tp": 12,
+      "tn": 11,
+      "fp": 3,
+      "fn": 4,
+      "labelled_events": 16,
+      "hit_1s": 0.25,
+      "hit_2s": 0.3125,
+      "failed": 0,
+      "name": "32B · storage veto (selected)",
+      "short_name": "32B selected",
+      "variant": "Storage veto",
+      "source": "data/processed/mission-claude-selected-dev30-honest.json",
+      "source_sha256": "15d092d8aa8096a12d226132e8a4bd55c520cbc78aa0efdbe915000eb04d2bae",
+      "correct": 23,
+      "localized_2s": 5
+    },
+    {
+      "n_videos": 30,
+      "accuracy": 0.8,
+      "recall": 0.8125,
+      "tp": 13,
+      "tn": 11,
+      "fp": 3,
+      "fn": 3,
+      "labelled_events": 16,
+      "hit_1s": 0.25,
+      "hit_2s": 0.3125,
+      "failed": 0,
+      "name": "32B · storage veto + rescue",
+      "short_name": "32B + rescue",
+      "variant": "Rescue recall pass",
+      "source": "data/processed/mission-claude-recall-rescue-dev30-honest.json",
+      "source_sha256": "bf41a40f30779c04565fa2bd180733f33723a451d811c8770f46e17a28e699fb",
+      "correct": 24,
+      "localized_2s": 5
     }
   ],
   "checkpoint": {
-    "source": "data/processed/mission-checkpoint-1/runtime-and-primary-audit.json",
-    "source_sha256": "28554eb7517dbbacb54facc4b5688612601c5654b6e91e43e30e662d4e86673e",
-    "summary_sha256": "386c1070fe8b36bc38684f9b9f5ce8071fc6aac5a45b918c593dd6b5cef11912",
-    "api_jobs": 44,
+    "source": "data/processed/mission-checkpoint-3-storage-qualified-v1/actual-api-runtime.json",
+    "source_sha256": "843f0fd644a4fa503056c455ed93086946ba9a2c1327305521dafea1ca033ffd",
+    "api_jobs": 42,
+    "clean_uploads": 40,
     "failed_jobs": 0,
-    "worst_sec": 76.51247401,
+    "worst_sec": 72.98429473300348,
+    "repeat_worst_sec": 65.90282472599938,
     "limit_sec": 300,
-    "full_set_qualified": false,
-    "transform_maxima_sec": [
-      39.02211690400145,
-      43.5225934110058,
-      60.58066810699529,
-      38.76305189800041,
-      76.51247401,
-      55.25243817499722,
-      42.42847577299108
-    ]
+    "full_set_qualified": true,
+    "transform_maxima_sec": []
   }
 }

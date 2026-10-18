@@ -105,7 +105,7 @@
     const checkpoint=snapshot.checkpoint;
     $('runtime-value').textContent=`${checkpoint.worst_sec.toFixed(1)}s`;
     $('runtime-delta').textContent=`${(checkpoint.limit_sec-checkpoint.worst_sec).toFixed(1)}s below the 300s limit`;
-    $('runtime-detail').textContent=`${checkpoint.api_jobs} jobs · ${checkpoint.failed_jobs} failed · partial checkpoint`;
+    $('runtime-detail').textContent=`${checkpoint.clean_uploads}/${checkpoint.clean_uploads} recordings via public API · ${checkpoint.api_jobs} jobs · ${checkpoint.failed_jobs} failed`;
     configurationComparison();animateInitial(r,checkpoint);
   }
   async function loadEvaluation(){

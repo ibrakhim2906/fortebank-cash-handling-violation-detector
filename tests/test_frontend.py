@@ -53,4 +53,4 @@ def test_bundled_snapshot_is_measured_aggregates_only():
     for row in snapshot["recipes"]:
         assert row["accuracy"] == row["correct"] / row["n_videos"]
         assert not {"per_video", "predictions", "aliases", "group_id", "evidence_frames", "image_base64"}.intersection(row)
-    assert snapshot["checkpoint"]["worst_sec"] == 76.51247401
+    assert snapshot["checkpoint"]["worst_sec"] == 72.98429473300348 and snapshot["checkpoint"]["failed_jobs"] == 0
