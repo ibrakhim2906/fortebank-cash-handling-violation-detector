@@ -91,6 +91,7 @@ def test_corrupt_or_extra_images_fail_closed():
     with pytest.raises(ValueError):observer.request_body(images()+images())
 
 
+@pytest.mark.skipif(not diagnostic.NAMES, reason='Public export intentionally redacts private six-recording diagnostic selection defaults.')
 def test_selection_is_independent_of_labels_anchors_and_input_order():
     original=protocol();expected=diagnostic.select(original)
     changed=copy.deepcopy(original);changed['groups'].reverse()
@@ -118,6 +119,7 @@ def test_private_outputs_are_exclusive_and_mode600(tmp_path):
     assert json.loads(path.read_text())=={'private':True}
 
 
+@pytest.mark.skipif(not diagnostic.NAMES, reason='Public export intentionally redacts private six-recording diagnostic selection defaults.')
 def test_prepare_freezes_sources_and_rejects_tampered_manifest_or_source(tmp_path,monkeypatch):
     monkeypatch.setattr(config,'ROOT',tmp_path)
     monkeypatch.setattr(config,'DATA_PROC',tmp_path/'data/processed')

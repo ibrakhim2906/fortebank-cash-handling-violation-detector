@@ -1,6 +1,7 @@
 """Presentation integration: assets, aggregate privacy, and unchanged jury API."""
 import asyncio
 import json
+import pytest
 from pathlib import Path
 
 from service.app import create_app
@@ -44,6 +45,7 @@ def test_frontend_assets_do_not_expose_source_artifacts(tmp_path):
     asyncio.run(scenario())
 
 
+@pytest.mark.skipif(not (Path(__file__).resolve().parents[1] / "data/processed/mission-v1-dev-honest.json").is_file(), reason='Public code-only export omits private evaluation source reports used to rebuild the bundled aggregate snapshot.')
 def test_bundled_snapshot_is_measured_aggregates_only():
     from scripts.build_frontend_snapshot import build_snapshot
     snapshot = json.loads((Path(__file__).resolve().parents[1] / "service/static/evaluation.json").read_text())

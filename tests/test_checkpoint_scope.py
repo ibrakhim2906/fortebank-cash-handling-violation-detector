@@ -6,6 +6,7 @@ from scripts.mission_checkpoint import quick_groups
 from scripts.rubric_score import calculate
 
 
+@pytest.mark.skipif(not (PROTOCOL.is_file() and SPLIT.is_file()), reason='Public code-only export omits private case protocol and split fixtures.')
 def test_bounded_checkpoint_excludes_reserve_and_covers_both_classes():
     groups=json.loads(PROTOCOL.read_text())['groups'];split=json.loads(SPLIT.read_text())
     selected=quick_groups(groups,split)

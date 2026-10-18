@@ -34,8 +34,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "8dca49f6f83b8f48e20b750ec827b16914f4252354547348b6bdd6fc5be24837",
-      "bytes": 1657,
+      "sha256": "f03e38f62d820453f810f397bd381ae030ba35fa4e1538e0fd8bf5690f452513",
+      "bytes": 3013,
       "generated_sanitized_document": true
     },
     {
@@ -58,6 +58,14 @@
       "bytes": 7216,
       "source_sha256": "1d0bbdf144c5d11526072f77ba38c72116c802091bf039aa7bc170103de52a6e",
       "export_only_redaction": false
+    },
+    {
+      "path": "deploy/mission-best.env",
+      "sha256": "794ee2eb0e6f26b4c76534fb140d7a9a7dfbaecd2975d7f30c5bdea0244bc781",
+      "source_sha256": "794ee2eb0e6f26b4c76534fb140d7a9a7dfbaecd2975d7f30c5bdea0244bc781",
+      "bytes": 459,
+      "selected_environment": true,
+      "generated_sanitized_document": false
     },
     {
       "path": "deploy/qwen25-vl-7b.json",
@@ -117,6 +125,12 @@
       "sha256": "e39f1886ef8421d5f6c896a106a33e47a1fde97306444dd2d2865e02c8c27c45",
       "bytes": 749,
       "generated_sanitized_document": true
+    },
+    {
+      "path": "experiments.md",
+      "generated_sanitized_document": true,
+      "sha256": "0ccc8377bf20943bf4808b89fea3d26fbafd42bea8ee0ef71d5532b6c6d2b0c4",
+      "bytes": 733
     },
     {
       "path": "licenses/movinet/Apache-2.0.txt",
@@ -1107,10 +1121,11 @@
     },
     {
       "path": "tests/test_checkpoint_scope.py",
-      "sha256": "712dcd96b16bed701d7f45baaf67827d461245f3689f2074308d7a73e0beeb73",
-      "bytes": 12362,
+      "sha256": "32ef3be9c2378c446c63f1b6a0bd3c378851f7603bd486c2d2fb8f6e0f322a33",
+      "bytes": 12510,
       "source_sha256": "712dcd96b16bed701d7f45baaf67827d461245f3689f2074308d7a73e0beeb73",
-      "export_only_redaction": false
+      "export_only_redaction": false,
+      "export_only_test_scope_adjustment": true
     },
     {
       "path": "tests/test_desk_rescan.py",
@@ -1142,10 +1157,11 @@
     },
     {
       "path": "tests/test_frontend.py",
-      "sha256": "a483c18f07745b162d5a181c7352645b3abfa17199b9a3e4cf80b8a07cdbf17e",
-      "bytes": 3355,
+      "sha256": "50220985b129af97b105409f8b5af6f78ca4c6e830e406a567d7474728c0fa2b",
+      "bytes": 3610,
       "source_sha256": "a483c18f07745b162d5a181c7352645b3abfa17199b9a3e4cf80b8a07cdbf17e",
-      "export_only_redaction": false
+      "export_only_redaction": false,
+      "export_only_test_scope_adjustment": true
     },
     {
       "path": "tests/test_ledger_mode_integration.py",
@@ -1429,10 +1445,11 @@
     },
     {
       "path": "tests/test_video_case_observations.py",
-      "sha256": "b043a05727b8efcb3f13084a749d0e053b64ab152745ed2df9f88734aa67bbe7",
-      "bytes": 9576,
+      "sha256": "4d97b446b32c6cbede32f5d464ac5af3f8c15ec063885a241ba7fc05a857dd1b",
+      "bytes": 9858,
       "source_sha256": "b043a05727b8efcb3f13084a749d0e053b64ab152745ed2df9f88734aa67bbe7",
-      "export_only_redaction": false
+      "export_only_redaction": false,
+      "export_only_test_scope_adjustment": true
     },
     {
       "path": "tests/test_video_decoder_provision.py",
@@ -1575,8 +1592,8 @@
       "export_only_redaction": false
     }
   ],
-  "file_count_excluding_manifest": 225,
-  "total_bytes_excluding_manifest": 2209497,
+  "file_count_excluding_manifest": 227,
+  "total_bytes_excluding_manifest": 2212730,
   "export_only_redactions": {
     "scripts/check_case_observations.py": [
       "NAMES",
@@ -1599,5 +1616,46 @@
   ],
   "scan_findings": [],
   "source_unchanged": true,
-  "unapplied_proposal_included": true
+  "unapplied_proposal_included": true,
+  "export_only_test_skips": [
+    {
+      "path": "tests/test_checkpoint_scope.py",
+      "test": "test_bounded_checkpoint_excludes_reserve_and_covers_both_classes",
+      "condition": "not (PROTOCOL.is_file() and SPLIT.is_file())",
+      "reason": "Public code-only export omits private case protocol and split fixtures."
+    },
+    {
+      "path": "tests/test_frontend.py",
+      "test": "test_bundled_snapshot_is_measured_aggregates_only",
+      "condition": "not (Path(__file__).resolve().parents[1] / \"data/processed/mission-v1-dev-honest.json\").is_file()",
+      "reason": "Public code-only export omits private evaluation source reports used to rebuild the bundled aggregate snapshot."
+    },
+    {
+      "path": "tests/test_video_case_observations.py",
+      "test": "test_selection_is_independent_of_labels_anchors_and_input_order",
+      "condition": "not diagnostic.NAMES",
+      "reason": "Public export intentionally redacts private six-recording diagnostic selection defaults."
+    },
+    {
+      "path": "tests/test_video_case_observations.py",
+      "test": "test_prepare_freezes_sources_and_rejects_tampered_manifest_or_source",
+      "condition": "not diagnostic.NAMES",
+      "reason": "Public export intentionally redacts private six-recording diagnostic selection defaults."
+    }
+  ],
+  "public_export_test_result": {
+    "passed": 1196,
+    "skipped": 6,
+    "warnings": 12,
+    "elapsed_sec": 45.55,
+    "scope": "source-only synthetic tests;4additionalprivate-fixturetestskips;no recognition claim",
+    "command": "UV_CACHE_DIR=/tmp/datathon-uv-cache UV_PROJECT_ENVIRONMENT=/home/ibrak/datathon-kit/.venv OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 taskset -c0,1 uv run --offline pytest -q"
+  },
+  "selected_environment_pending": false,
+  "selected_environment_sha256": "794ee2eb0e6f26b4c76534fb140d7a9a7dfbaecd2975d7f30c5bdea0244bc781",
+  "selected_recipe_verification": {
+    "public_recipe_sha256": "d4c64e727fab0890048f332a03e90e1fae61343e3ddb39afce1bbad864140bfc",
+    "matches_actual_selected_deployment": true,
+    "method": "Imported public service.pipeline.analyze.recipe_fingerprint with deploy/mission-best.env, compared to private actual deployment freeze."
+  }
 }
