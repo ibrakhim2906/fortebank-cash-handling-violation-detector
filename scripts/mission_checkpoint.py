@@ -106,6 +106,9 @@ def save_api_stage(root,summary):
     if 'freeze_sha256' in summary:common['freeze_sha256']=summary['freeze_sha256']
     common.update(official_score=False,stage='clean_api_and_repeats_complete',stage_full_aug_pending=True,
                   all_requested_transforms_complete=False,worst_clean_api_sec=summary['api']['worst_sec'])
+    if summary.get('api_only'):
+        common.update(api_only=True,full_aug_requested=False,augmentation_stage='deferred_by_api_only',
+                      robustness_credit_eligible=False)
     # Read only operational provenance; do not expose reserve predictions/facts.
     jobs=[]
     for folder in ['reserve.traces','api-dev.traces']:
@@ -131,7 +134,9 @@ def main(argv=None):
     p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--honest',type=Path,required=True)
     p.add_argument('--freeze',type=Path,help='Frozen serving recipe JSON; required for runtime credit unless --honest includes recipe_sha256')
     p.add_argument('--quick',action='store_true',help='Reserve10 plus balanced DEV4 and their28transforms; no full-set product/robustness credit')
+    p.add_argument('--api-only',action='store_true',help='Full40 clean public-API uploads and two slowest-source repeats; defer all280transforms with no robustness credit')
     args=p.parse_args(argv)
+    if args.api_only and args.quick:p.error('--api-only requires full40 scope and cannot be combined with --quick')
     expected_recipe=selected_recipe(json.loads(args.honest.read_text()),json.loads(args.freeze.read_text()) if args.freeze else None)
     root=args.run_dir.resolve()
     if not root.is_relative_to(config.DATA_PROC):raise ValueError('Checkpoint artifacts must be private derived data')
@@ -149,6 +154,7 @@ def main(argv=None):
     only=quick_groups(protocol['groups'],json.loads(SPLIT.read_text())) if args.quick else []
     scope=['--only',*only] if only else []
     summary.update(scope='partial_checkpoint' if args.quick else 'full_checkpoint',dev_groups=only or 'all30',full_set_requested=not args.quick)
+    if args.api_only:summary.update(scope='full_clean_api_only',api_only=True,full_aug_requested=False)
     (root/'scope.json').write_text(json.dumps(summary,indent=2)+'\n')
     summary['reserve']=run(['--subset','reserve','--api',args.api,'--key-file',str(args.key_file)],root/'reserve.json')
     dev_api=run(['--subset','dev','--api',args.api,'--key-file',str(args.key_file),*scope],root/'api-dev.json')
@@ -163,6 +169,20 @@ def main(argv=None):
     summary['worst_case_repeats']=repeats
     summary['runtime_qualification']=qualification
     save_api_stage(root,summary)
+    if args.api_only:
+        # Preserve full clean/API provenance and both real repeats, while making
+        # the unmeasured robustness stage impossible to mistake for a pass.
+        deferred=dict(clean_accuracy=api_all['accuracy'],all_requested_transforms_complete=False,
+                      deferred=True,stage='deferred_by_api_only',transforms=[],completed_transforms=0,
+                      planned_transforms=list(TRANSFORMS),robustness_credit_eligible=False)
+        atomic_json(root/'augmented.json',deferred)
+        public=json.loads((root/'api-stage-summary.json').read_text())
+        public.update(augmented=deferred,robustness_credit_eligible=False,
+                      cheat_replay=dict(not_run=True,passed=False,full_set_passed=False,
+                                        reason='Re-encode stage deferred by --api-only'))
+        atomic_json(root/'summary.json',public)
+        print(json.dumps(public,indent=2))
+        return
     transforms=[];reencoded_report=None
     for name in TRANSFORMS:
         report=run(['--subset','dev' if args.quick else 'all','--api',args.api,'--key-file',str(args.key_file),'--augment',name,*scope],root/('aug-'+name+'.json'))

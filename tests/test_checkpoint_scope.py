@@ -99,7 +99,8 @@ def test_repeat_selection_falls_back_only_without_usable_completed_clean_latency
     assert basis['basis']=='longest_duration_fallback_no_completed_clean_api'
 
 
-def test_interrupted_augmentation_preserves_clean_api_and_qualified_repeat_evidence(monkeypatch,tmp_path):
+@pytest.mark.parametrize('api_only',[False,True])
+def test_checkpoint_preserves_clean_api_and_repeats_before_optional_augmentation(monkeypatch,tmp_path,api_only,capsys):
     recipe='a'*64
     groups=[dict(group_id=f'g{i:02}',target=0,video_ids=[f'X-{i+1}'],duration_sec=150-i)
             for i in range(40)]
@@ -133,10 +134,15 @@ def test_interrupted_augmentation_preserves_clean_api_and_qualified_repeat_evide
         output.write_text(json.dumps(report));return report
     monkeypatch.setattr(checkpoint,'run',fake_run)
     root=tmp_path/'interrupted-checkpoint'
-    with pytest.raises(RuntimeError,match='Interrupted during first augmentation'):
-        checkpoint.main(['--api','https://public.example','--key-file',str(tmp_path/'key'),
-                         '--run-dir',str(root),'--honest',str(honest)])
-    assert calls==['reserve','dev','repeat','repeat','augmentation']
+    args=['--api','https://public.example','--key-file',str(tmp_path/'key'),
+          '--run-dir',str(root),'--honest',str(honest)]
+    if api_only:
+        checkpoint.main(args+['--api-only'])
+        assert calls==['reserve','dev','repeat','repeat']
+    else:
+        with pytest.raises(RuntimeError,match='Interrupted during first augmentation'):
+            checkpoint.main(args)
+        assert calls==['reserve','dev','repeat','repeat','augmentation']
     stage=json.loads((root/'api-stage-summary.json').read_text())
     runtime=json.loads((root/'runtime-qualification.json').read_text())
     assert stage['api']['n_videos']==stage['api']['completed']==40
@@ -150,5 +156,52 @@ def test_interrupted_augmentation_preserves_clean_api_and_qualified_repeat_evide
     assert runtime['worst_case_repeat_selection']['group_id']=='g39'
     assert len({r['job_id'] for r in runtime['worst_case_repeats']})==2
     assert 'facts' not in json.dumps(stage)
-    assert not (root/'summary.json').exists() and not (root/'augmented.json').exists()
+    if api_only:
+        final=json.loads((root/'summary.json').read_text())
+        augmented=json.loads((root/'augmented.json').read_text())
+        assert stage['scope']=='full_clean_api_only' and stage['api_only'] is True
+        assert stage['full_set_requested'] is True and stage['full_aug_requested'] is False
+        assert final['api']['mode']=='api' and final['api']['subset']=='all'
+        assert final['api']['n_videos']==final['api']['completed']==40
+        assert final['stage_full_aug_pending'] is True and final['robustness_credit_eligible'] is False
+        assert augmented['deferred'] is True and augmented['all_requested_transforms_complete'] is False
+        assert augmented['transforms']==[] and augmented['completed_transforms']==0
+        assert 'accuracy' not in augmented  # No invented unmeasured robustness score.
+        assert final['cheat_replay']['not_run'] is True and final['cheat_replay']['passed'] is False
+        assert not list(root.glob('aug-*.json'))
+        rubric=calculate(dict(mode='cached',validation_kind='leave-one-setup-out',fold_integrity_verified=True,accuracy=1),
+                        api=final['api'],augmented=augmented,gates=dict(pytest_green=True))
+        assert rubric['components']['robustness']==0
+        assert 'facts' not in capsys.readouterr().out
+        counter=json.loads((tmp_path/'mission-reserve-checkpoints.json').read_text())
+        assert len(counter)==1 and counter[0]['run_dir']==str(root)
+    else:
+        assert not (root/'summary.json').exists() and not (root/'augmented.json').exists()
     assert not list(root.glob('*.tmp'))
+
+
+def test_api_only_preserves_four_reserve_check_guard_without_any_upload(monkeypatch,tmp_path):
+    monkeypatch.setattr(checkpoint.config,'DATA_PROC',tmp_path)
+    honest=tmp_path/'honest.json';honest.write_text('{}')
+    counter=tmp_path/'mission-reserve-checkpoints.json'
+    original=[dict(started_utc='previous',run_dir=str(tmp_path/f'check-{i}')) for i in range(4)]
+    counter.write_text(json.dumps(original))
+    before=counter.read_bytes()
+    monkeypatch.setattr(checkpoint,'run',lambda *a,**k:pytest.fail('Exhausted reserve guard allowed an upload'))
+    with pytest.raises(ValueError,match='Four reserve checks already consumed'):
+        checkpoint.main(['--api','https://public.example','--key-file',str(tmp_path/'key'),
+                         '--run-dir',str(tmp_path/'fifth'),'--honest',str(honest),'--api-only'])
+    assert counter.read_bytes()==before
+    assert not list(tmp_path.glob('*.tmp'))
+
+
+def test_api_only_cannot_silently_use_quick_partial_scope(monkeypatch,tmp_path):
+    monkeypatch.setattr(checkpoint.config,'DATA_PROC',tmp_path)
+    monkeypatch.setattr(checkpoint,'run',lambda *a,**k:pytest.fail('Conflicting scope flags allowed an upload'))
+    with pytest.raises(SystemExit) as exc:
+        checkpoint.main(['--api','https://public.example','--key-file',str(tmp_path/'key'),
+                         '--run-dir',str(tmp_path/'invalid'),'--honest',str(tmp_path/'not-read'),
+                         '--api-only','--quick'])
+    assert exc.value.code==2
+    assert not (tmp_path/'invalid').exists()
+    assert not (tmp_path/'mission-reserve-checkpoints.json').exists()
