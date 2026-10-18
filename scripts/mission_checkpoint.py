@@ -93,6 +93,39 @@ def worst_case_repeats(longest,api,key_file,root,expected_recipe):
     return repeats,qualification
 
 
+def atomic_json(path,value):
+    temporary=path.with_name(path.name+'.tmp')
+    temporary.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
+    temporary.chmod(0o600);temporary.replace(path)
+
+
+def save_api_stage(root,summary):
+    """Persist completed API evidence before the long augmentation stage."""
+    common={k:summary[k] for k in ['evaluator_sha256','honest_report_sha256','selected_recipe_sha256',
+                                  'reserve_check','scope','full_set_requested']}
+    if 'freeze_sha256' in summary:common['freeze_sha256']=summary['freeze_sha256']
+    common.update(official_score=False,stage='clean_api_and_repeats_complete',stage_full_aug_pending=True,
+                  all_requested_transforms_complete=False,worst_clean_api_sec=summary['api']['worst_sec'])
+    # Read only operational provenance; do not expose reserve predictions/facts.
+    jobs=[]
+    for folder in ['reserve.traces','api-dev.traces']:
+        for path in sorted((root/folder).glob('*.json')):
+            trace=json.loads(path.read_text());analysis=trace.get('analysis') or {}
+            jobs.append({k:trace.get(k) for k in ['job_id','status','api_elapsed_sec']}|
+                        {k:analysis.get(k) for k in ['engine','recipe_sha256']})
+    runtime=common|summary['runtime_qualification']|dict(worst_case_repeat_selection=summary['worst_case_repeat_selection'],
+                worst_case_repeats=summary['worst_case_repeats'])
+    atomic_json(root/'runtime-qualification.json',runtime)
+    aggregates=['mode','subset','n_videos','completed','failed','accuracy','recall','fp','hit_2s','type_accuracy','worst_sec']
+    stage=common|dict(api={k:summary['api'].get(k) for k in aggregates},
+                     reserve={k:summary['reserve'].get(k) for k in aggregates},
+                     clean_job_provenance=jobs,clean_job_ids=[j['job_id'] for j in jobs if j['job_id']],
+                     runtime_qualification=summary['runtime_qualification'],
+                     worst_case_repeat_selection=summary['worst_case_repeat_selection'],
+                     worst_case_repeats=summary['worst_case_repeats'])
+    atomic_json(root/'api-stage-summary.json',stage)
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--api',required=True);p.add_argument('--key-file',type=Path,required=True)
     p.add_argument('--run-dir',type=Path,required=True);p.add_argument('--honest',type=Path,required=True)
@@ -124,6 +157,12 @@ def main(argv=None):
     api_all=score_records(all_rows,[g for g in protocol['groups'] if g['group_id'] in ids],notes['events'],notes['taxonomy'])
     api_all.update(mode='api',subset='partial_checkpoint' if args.quick else 'all',records=all_rows)
     (root/'api-all.json').write_text(json.dumps(api_all,ensure_ascii=False,indent=2)+'\n');summary['api']=api_all
+    selected,selection=repeat_source(protocol['groups'],all_rows)
+    selection['group_id']=selected['group_id'];summary['worst_case_repeat_selection']=selection
+    repeats,qualification=worst_case_repeats(selected,args.api,args.key_file,root,expected_recipe)
+    summary['worst_case_repeats']=repeats
+    summary['runtime_qualification']=qualification
+    save_api_stage(root,summary)
     transforms=[];reencoded_report=None
     for name in TRANSFORMS:
         report=run(['--subset','dev' if args.quick else 'all','--api',args.api,'--key-file',str(args.key_file),'--augment',name,*scope],root/('aug-'+name+'.json'))
@@ -131,11 +170,6 @@ def main(argv=None):
         if name=='reencode':reencoded_report=report
     augmented=dict(accuracy=sum(r['accuracy'] for r in transforms)/len(transforms),clean_accuracy=dev_api['accuracy'] if args.quick else api_all['accuracy'],all_requested_transforms_complete=not args.quick and all(r['n_videos']==40 and r['failed']==0 for r in transforms),transforms=transforms)
     (root/'augmented.json').write_text(json.dumps(augmented,indent=2)+'\n');summary['augmented']=augmented
-    selected,selection=repeat_source(protocol['groups'],all_rows)
-    selection['group_id']=selected['group_id'];summary['worst_case_repeat_selection']=selection
-    repeats,qualification=worst_case_repeats(selected,args.api,args.key_file,root,expected_recipe)
-    summary['worst_case_repeats']=repeats
-    summary['runtime_qualification']=qualification
     # All40 uploads reach the worker as anonymous source.mov; then re-encode
     # every source too, so a byte-fingerprint lookup cannot pass this control.
     clean={r['group_id']:r for r in api_all['records']}

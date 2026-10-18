@@ -97,3 +97,58 @@ def test_repeat_selection_falls_back_only_without_usable_completed_clean_latency
     selected,basis=checkpoint.repeat_source(groups,records)
     assert selected['group_id']=='long'
     assert basis['basis']=='longest_duration_fallback_no_completed_clean_api'
+
+
+def test_interrupted_augmentation_preserves_clean_api_and_qualified_repeat_evidence(monkeypatch,tmp_path):
+    recipe='a'*64
+    groups=[dict(group_id=f'g{i:02}',target=0,video_ids=[f'X-{i+1}'],duration_sec=150-i)
+            for i in range(40)]
+    protocol=tmp_path/'protocol.json';protocol.write_text(json.dumps(dict(groups=groups)))
+    annotations=tmp_path/'annotations.json';annotations.write_text(json.dumps(dict(events=[],taxonomy={})))
+    honest=tmp_path/'honest.json';honest.write_text(json.dumps(dict(recipe_sha256=recipe)))
+    monkeypatch.setattr(checkpoint.config,'DATA_PROC',tmp_path)
+    monkeypatch.setattr(checkpoint,'PROTOCOL',protocol);monkeypatch.setattr(checkpoint,'ANNOTATIONS',annotations)
+    calls=[]
+    def fake_run(args,output):
+        if '--augment' in args:
+            calls.append('augmentation')
+            raise RuntimeError('Interrupted during first augmentation')
+        if '--only' in args:
+            selected=[g for g in groups if g['group_id']==args[args.index('--only')+1]]
+            calls.append('repeat')
+        else:
+            subset=args[args.index('--subset')+1];calls.append(subset)
+            selected=groups[:10] if subset=='reserve' else groups[10:]
+        folder=output.with_suffix('.traces');folder.mkdir()
+        records=[]
+        for g in selected:
+            elapsed=75 if g['group_id']=='g39' else 12
+            records.append(dict(group_id=g['group_id'],status='done',elapsed_sec=elapsed,
+                                result=dict(verdict='no_violation',violations=[])))
+            trace=dict(job_id=f'actual-job-{len(calls)}-{g["group_id"]}',status='done',api_elapsed_sec=elapsed,
+                       analysis=dict(engine='mission-v1',recipe_sha256=recipe,facts={'private':'not in summary'}))
+            (folder/(g['group_id']+'.json')).write_text(json.dumps(trace))
+        report=checkpoint.score_records(records,selected,[],{})
+        report.update(mode='api',subset=args[args.index('--subset')+1],records=records)
+        output.write_text(json.dumps(report));return report
+    monkeypatch.setattr(checkpoint,'run',fake_run)
+    root=tmp_path/'interrupted-checkpoint'
+    with pytest.raises(RuntimeError,match='Interrupted during first augmentation'):
+        checkpoint.main(['--api','https://public.example','--key-file',str(tmp_path/'key'),
+                         '--run-dir',str(root),'--honest',str(honest)])
+    assert calls==['reserve','dev','repeat','repeat','augmentation']
+    stage=json.loads((root/'api-stage-summary.json').read_text())
+    runtime=json.loads((root/'runtime-qualification.json').read_text())
+    assert stage['api']['n_videos']==stage['api']['completed']==40
+    assert len(stage['clean_job_ids'])==len(set(stage['clean_job_ids']))==40
+    assert all(j['recipe_sha256']==recipe and j['engine']=='mission-v1' for j in stage['clean_job_provenance'])
+    assert stage['stage_full_aug_pending'] is True and stage['all_requested_transforms_complete'] is False
+    assert stage['selected_recipe_sha256']==runtime['selected_recipe_sha256']==recipe
+    assert len(stage['evaluator_sha256'])==64 and stage['evaluator_sha256']==runtime['evaluator_sha256']
+    assert stage['worst_clean_api_sec']==runtime['worst_clean_api_sec']==75
+    assert runtime['two_worst_case_runs_passed'] is True
+    assert runtime['worst_case_repeat_selection']['group_id']=='g39'
+    assert len({r['job_id'] for r in runtime['worst_case_repeats']})==2
+    assert 'facts' not in json.dumps(stage)
+    assert not (root/'summary.json').exists() and not (root/'augmented.json').exists()
+    assert not list(root.glob('*.tmp'))
