@@ -1,0 +1,23 @@
+[
+ {
+  "name": "rescue-reserve10",
+  "env": {
+   "AUDITOR_RECALL": "rescue"
+  },
+  "ids": "reserve10-ids.json"
+ },
+ {
+  "name": "rescue-flip-dev30",
+  "env": {
+   "AUDITOR_RECALL": "rescue"
+  },
+  "inputs": "data/processed/claude-aug-flip"
+ },
+ {
+  "name": "rescue-rotate-dev30",
+  "env": {
+   "AUDITOR_RECALL": "rescue"
+  },
+  "inputs": "data/processed/claude-aug-rotate_plus"
+ }
+]

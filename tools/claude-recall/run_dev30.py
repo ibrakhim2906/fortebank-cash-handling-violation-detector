@@ -81,7 +81,9 @@ def environment(overrides):
     return env
 
 
-def run(spec,ids,deadline):
+def run(spec,default_ids,deadline):
+    ids=json.loads((ROOT/'tools/claude-recall'/spec['ids']).read_text()) if 'ids' in spec else default_ids
+    inputs=spec.get('inputs','data/processed/mission-inputs-v1')
     name=spec['name'];output=ROOT/'data/processed'/('claude-'+name);terminal=RUNTIME/(name+'-terminal.json')
     if output.exists() or terminal.exists():log('skip existing',name);return
     env=environment(spec.get('env',{}))
@@ -91,7 +93,7 @@ def run(spec,ids,deadline):
     started=time.time();code=None;child=None
     try:
         (RUNTIME/(name+'-freeze.json')).write_text(json.dumps(dict(trial=name,recipe_sha256=recipe,env=spec.get('env',{}),started=started),indent=2))
-        child=subprocess.Popen(['uv','run','--frozen','--no-dev','python','-m','scripts.benchmark_auditor','--inputs','data/processed/mission-inputs-v1',
+        child=subprocess.Popen(['uv','run','--frozen','--no-dev','python','-m','scripts.benchmark_auditor','--inputs',inputs,
                                 '--output',str(output),'--profile','qwen3-32b-awq','--cached','--only',*ids],cwd=ROOT,env=env,start_new_session=True)
         code=child.wait(timeout=6000)
     finally:

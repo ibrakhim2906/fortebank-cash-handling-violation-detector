@@ -53,6 +53,7 @@ All numbers come from real runs with the frozen evaluator (`scripts/eval_video.p
 | Selected (storage veto) | DEV30 | 23/30 | 12 / 4 / 3 | 5/16 |
 | **+ rescue recall pass** | DEV30 | **24/30** | 13 / 3 / 3 | 5/16 |
 | Selected, public API | all 40 | 27/40 | 13 / 8 / 5 | 6/22 |
+| **+ rescue recall pass** | all 40 | **28/40** | 14 / 7 / 5 | 6/22 |
 
 - **Latency:** the slowest of the 40 public-API uploads took 73.0 s, and two repeats took 64.9 s and 65.9 s, all within the 200 s limit.
 - **Event types:** every event matched in time got the correct type.
