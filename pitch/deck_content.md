@@ -2,25 +2,22 @@
 
 Live deck (Slides artifact, private until shared): https://claude.ai/artifact/LwnP6P6VqrWGmiEiahS9HU
 
-11 slides, Montserrat, minimal layout, bullet points, no icons. Focus: what CodeLint does and its advantages.
+7 slides in Russian, Montserrat, grey background, black text, bullet points, no icons. Focus: what CodeLint does and its advantages.
+Team: Ибрахим Копжасар, Дмитрий Куттыбаев, Дидар Баймуратов.
 
 ## Slides
 
 | # | Slide | Content |
 |---|---|---|
-| 1 | Cover | CodeLint — automatic review of cash-handling procedures in bank video. Team Seltik |
-| 2 | The task | Input: cash-room video. Output: verdict, type, timecode, explanation, evidence frames. Conditions: API, under 5 minutes |
-| 3 | Our solution | Upload a video, get every violation with its second, description and original frames; 14 types, НБРК norm link, secure REST API |
-| 4 | What CodeLint detects | 14 types in 4 groups: storage and security (5), access and handover (2), transaction steps (4), workplace rules (3) |
-| 5 | How it works | Upload → sample 2 fps → analyze (Qwen3-VL-32B, one A40) → verify → report; no external AI service |
-| 6 | Example result | Violation · cash left outside the safe · 44.0 s · frames at 44.0 s and 45.5 s · НБРК №231, п.20 |
-| 7 | Accuracy | Normal work is not flagged; second check of “safe left open” gives 50% fewer false alarms (6 → 3), same 12 caught |
-| 8 | Results by version | 23/30 correct, 12/16 violation videos detected, 42/42 API jobs, 73 s slowest; bars 12 → 16 → 20 → 23 |
-| 9 | Results on 40 cases | 27/40 correct; 13 caught, 8 missed, 14 cleared, 5 false alarms; 6/22 within ±2 s; footer on improving via model training |
-| 10 | Advantages | Private, explainable, fast, reliable, auditable, responsible |
-| 11 | Close | CodeLint — clear evidence for every cash-handling violation; ready for a pilot. Team Seltik |
+| 1 | Обложка | CodeLint — автоматическая проверка кассовых процедур по видео. Команда Seltik и состав команды |
+| 2 | Задача и решение | Задача кейса (тип, момент, объяснение, кадры, API до 5 минут) и ответ CodeLint (14 типов, таймкод, 1–3 кадра, норма НБРК, REST API) |
+| 3 | Что находит CodeLint | 14 типов нарушений в 4 группах: хранение и безопасность (5), доступ и передача (2), этапы операции (4), правила рабочего места (3) |
+| 4 | Как это работает | Загрузка → кадры 2 в секунду → анализ (Qwen3-VL-32B, одна A40) → повторная проверка → отчёт; без внешних ИИ-сервисов; обычная работа не считается нарушением |
+| 5 | Пример результата | Нарушение · наличные оставлены вне сейфа · 44,0 с · кадры 44,0 и 45,5 с · НБРК №231, п.20 |
+| 6 | Результаты | 27/40 верных вердиктов, −50% ложных срабатываний (6 → 3), 42/42 задачи API, 73 с максимум; версии на 30 видео: 12 → 16 → 20 → 23 |
+| 7 | Преимущества | Конфиденциально, объяснимо, быстро, надёжно, проверяемо, ответственно; готовы к пилоту; спасибо за внимание |
 
-Slide 6 shows an example of the real output format (fields, timing rule and norm link from `service/pipeline/analyze.py::build_result`).
+Slide 5 shows an example of the real output format (fields, timing rule and norm link from `service/pipeline/analyze.py::build_result`).
 
 ## Where every number comes from
 
@@ -37,5 +34,5 @@ All figures are copied from results already recorded in the repo; nothing was re
 
 ## Q&A backup
 
-- Slides 7–8 are measured on the 30-video development set; all 40 given videos were seen during development, so these are not an independent test score.
+- The version comparison and the −50% false-alarm figure are measured on the 30-video development set; all 40 given videos were seen during development, so these are not an independent test score.
 - Planned improvements (higher-resolution frames, native video input, more training work) are not yet measured.
