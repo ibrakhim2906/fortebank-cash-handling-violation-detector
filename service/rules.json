@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "mode": "development_physical_concerns",
+  "note": "No seed legal rule activated. Auditor observations require separate focused confirmation and literal visual prerequisites. Sources are context with explicit limits, not invented legal findings.",
+  "types": {
+    "cash_left_out": {
+      "name": "Наличные деньги оставлены вне сейфа (хранилища)",
+      "name_en": "Storage of previously accepted cash outside designated lockable storage units",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "cashier_leaving",
+        "require_any": [
+          "cash_on_desk",
+          "bag_on_desk"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 15,
+        "alt": {
+          "trigger": "cash_on_desk",
+          "require_none": [
+            "client_present",
+            "counter_active"
+          ],
+          "min_duration_sec": 4.0
+        }
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, п.20",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Ранее принятые деньги хранятся в запираемых устройствах; активный пересчёт не считается оставлением."
+      }
+    },
+    "door_left_open": {
+      "name": "Дверь кассы оставлена открытой (незапертой)",
+      "name_en": "Cash room door left open / unlocked",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "door_open",
+        "min_duration_sec": 3.0,
+        "require_none": [
+          "person_in_doorway"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          3.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №14, п.16",
+        "url": "https://adilet.zan.kz/rus/docs/V2000020075",
+        "scope": "Источник определяет требования к обособленному входу и запираемой двери; постоянное закрытое состояние и исправность замка этим видео не доказываются."
+      }
+    },
+    "unauthorized_access": {
+      "name": "Доступ постороннего лица в кассовое помещение / к рабочему месту кассира",
+      "name_en": "Unauthorized access to the cash handling room / cashier's workstation",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "outsider_present",
+        "min_duration_sec": 1.5,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №14, п.16",
+        "url": "https://adilet.zan.kz/rus/docs/V2000020075",
+        "scope": "Видео показывает пересечение границы клиентской и рабочей зоны; персональные полномочия человека по видео не устанавливаются."
+      }
+    },
+    "hand_to_hand_transfer": {
+      "name": "Передача ценностей из рук в руки, минуя передаточное устройство",
+      "name_en": "Hand-to-hand transfer of cash/valuables bypassing the transfer tray",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "hand_to_hand",
+        "min_duration_sec": 0.5,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.0
+        ],
+        "cooldown_sec": 15
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №14, п.16",
+        "url": "https://adilet.zan.kz/rus/docs/V2000020075",
+        "scope": "Видимые установленное устройство и обход описываются отдельно от требования к оборудованию; обязательность конкретного способа передачи проверяется по применимой процедуре."
+      }
+    },
+    "safe_left_open": {
+      "name": "Сейф оставлен открытым",
+      "name_en": "Safe left open",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "safe_open",
+        "require_none": [
+          "cashier_at_safe"
+        ],
+        "min_duration_sec": 3.0,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, п.20",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Проверяется сохранность ранее принятых денег; открытие при активной работе само по себе не нарушение. Факт запирания по видео не установлен."
+      }
+    },
+    "keys_left_in_safe": {
+      "name": "Ключи оставлены в замке сейфа",
+      "name_en": "Keys left in the safe lock",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "cashier_leaving",
+        "require_all": [
+          "key_in_safe_lock"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": null
+    },
+    "workstation_unlocked": {
+      "name": "Рабочий компьютер не заблокирован при уходе кассира",
+      "name_en": "Workstation computer left unlocked when leaving",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "cashier_leaving",
+        "require_all": [
+          "laptop_screen_on"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": null
+    },
+    "counting_without_client": {
+      "name": "Пересчёт принятых наличных в отсутствие клиента",
+      "name_en": "Counting incoming cash in the customer's absence",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "client_left",
+        "require_after": {
+          "fact": "counter_active",
+          "equals": true,
+          "min_sec": 1.0,
+          "within_sec": 15.0
+        },
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          3.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, пп.19–20",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Нужен контекст приёма наличных; внутренний пересчёт и упаковочный/инкассаторский порядок исключаются."
+      }
+    },
+    "no_count_check": {
+      "name": "Приём наличных без полистного пересчёта и проверки подлинности",
+      "name_en": "Acceptance of cash without counting each banknote and verifying authenticity",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "cash_received",
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 20,
+        "absent_after": {
+          "fact": "counter_active",
+          "within_sec": 15.0
+        }
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, п.19(2), п.20",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Допускается только при полной видимости соответствующей фазы; отсутствие счётной машины не означает отсутствие ручного пересчёта. Исключения для выдачи/инкассации сохраняются."
+      }
+    },
+    "no_id_check": {
+      "name": "Приём наличных без идентификации клиента по документу",
+      "name_en": "Acceptance of cash without verifying the client's identity document",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "cash_received",
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 30,
+        "absent_before": {
+          "fact": "id_document_shown",
+          "within_sec": 60.0
+        }
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, пп.19,31",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Цифровые документы допустимы; скрытая, электронная или более ранняя проверка не объявляется нарушением."
+      }
+    },
+    "no_receipt": {
+      "name": "Выдача наличных (сдачи) без документа, подтверждающего операцию",
+      "name_en": "Cash issued without a document confirming the operation",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "cash_given",
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 30,
+        "absent_after": {
+          "fact": "document_given",
+          "within_sec": 10.0
+        }
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, пп.19,31",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Требуется полностью видимая применимая фаза; ранее переданный или электронный документ может быть вне кадра."
+      }
+    },
+    "personal_items": {
+      "name": "Личные вещи в кассовой зоне",
+      "name_en": "Placement of personal belongings within the cash handling area",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "bag_on_desk",
+        "require_none": [
+          "client_present"
+        ],
+        "min_duration_sec": 1.5,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 30
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, п.12",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Ограничение хранения личных вещей в кассовом узле имеет исключения; рабочая инкассаторская сумка не считается личной."
+      }
+    },
+    "food_drink": {
+      "name": "Употребление напитков на рабочем месте при работе с наличными",
+      "name_en": "Consuming beverages at the workstation while handling cash",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "drink_at_face_or_desk",
+        "min_duration_sec": 1.0,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.0
+        ],
+        "cooldown_sec": 30
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": {
+        "act": "НБРК №231, п.12",
+        "url": "https://adilet.zan.kz/rus/docs/V1900019680",
+        "scope": "Источник касается личных вещей в кассовом узле. Отдельный нормативный запрет еды не установлен; наблюдение требует проверки условий хранения и работы."
+      }
+    },
+    "personal_activity": {
+      "name": "Посторонние занятия на рабочем месте (чтение)",
+      "name_en": "Personal activities (reading) at the workstation",
+      "enabled": false,
+      "auditor_review_enabled": true,
+      "logic": {
+        "trigger": "book_in_hands",
+        "min_duration_sec": 2.0,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 30
+      },
+      "rules": [],
+      "source_status": "No automatic legal applicability claim; visible concern for human review only.",
+      "context_source": null
+    }
+  }
+}
