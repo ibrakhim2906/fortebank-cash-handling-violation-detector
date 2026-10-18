@@ -73,6 +73,9 @@ def action_rescan(frames,deadline,*,requester=None):
     logs.append(dict(stage='action_window_selection',source_times=[[f['timestamp_sec'] for f in w] for w in windows]))
     catalogue='\n'.join(line for line in predicate_catalogue().splitlines() if line.partition(':')[0] in KINDS)
     prompt=('These are chronological original images from one short motion-selected interval, not the entire recording. '
+            'observations contains POSITIVE target actions only, never a checklist of all three categories. '
+            'Do not add entries describing absence, unchanged empty surfaces or actions that did not occur. '
+            'When no target action is visible, return observations=[]; use assessment=clear_negative when clearly observable, otherwise uncertain. '
             'First identify a literal visible BEFORE state and AFTER state of an object-person interaction; then classify only clearly supported actions under the predicates below. '
             'For eating/drinking see actual food/container-to-mouth interaction; for personal items see an unworn coat/personal handbag deposited on the actual cash working surface; '
             'for transfer see the actual object move from one person to another and the bypassed transfer device. Hand proximity alone is insufficient. '
@@ -80,7 +83,7 @@ def action_rescan(frames,deadline,*,requester=None):
             'Reject worn clothing, operational collection bags, ordinary work documents and legitimate use of a transfer device. '
             'prerequisites_visible=true only when the needed cash-workplace/role/device context is directly visible in THESE images; unknown otherwise. '
             'Use indices in THIS request. before_frame must precede after_frame; choose after_frame as the FIRST clearly visible target action, not its end. '
-            'Give short literal before_fact and after_fact in Russian, without legal conclusions. clear_negative means no supported target action in THIS interval only; otherwise uncertain. '+catalogue)
+            'Each Russian before_fact and after_fact must be at most six words, with no legal conclusions. clear_negative means no supported target action in THIS interval only; otherwise uncertain. '+catalogue)
     for selected in windows:
         if time.monotonic()+35>=deadline:
             incomplete('ActionWindowBudget');break
