@@ -53,7 +53,7 @@ H. **Speed.** Batch auditor calls, vLLM prefix caching, lower resolution where a
 ## 5. Guardrails (all AGENTS.md hard rules apply)
 - **Budget:** pod costs $0.59/h, $15 total, auto top-up off → never create extra pods or bigger GPUs; never leave long jobs running needlessly. Report remaining runtime in each checkpoint.
 - **No cloud AI APIs** in the service. Internet is allowed only to read documentation/papers and download open-source packages and weights.
-- Licence of every model/library recorded in `docs/submission.md` (Apache-2.0 / MIT / BSD only).
+- Licence of every model/library recorded in `docs/submission.md`, under the organisers' rule (R50–R56): open source with commercial use permitted. Model weights Apache-2.0 / MIT / BSD only; the supporting runtime may also use MPL, LGPL and PSF terms, and NVIDIA CUDA runtime terms for `nvidia-*` distributions. GPL/AGPL, non-commercial or unidentified licences fail. Check with `uv run python -m scripts.verify_license_policy`. (18 Oct 2026, human decision; replaces the earlier Apache/MIT/BSD-only wording for libraries.)
 - `uv run pytest` green after every change touching `service/`; `AUDITOR=off` (CPU fallback) must still run end-to-end.
 - Legal quotes in rules.json change only to match verified act text (docs/case/legal.md).
 - Never delete a working capability to gain score elsewhere without logging why.

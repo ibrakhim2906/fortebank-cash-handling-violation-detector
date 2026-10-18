@@ -29,7 +29,20 @@
           "min_duration_sec": 4.0
         }
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.20, ч.2",
+          "quote": "Все ранее принятые наличные деньги хранятся в специальных устройствах, находящихся на рабочем месте кассового работника, закрывающихся на ключ, предназначенных для хранения наличных денег (металлический шкаф, сейф, тележка, ящики стола, тумба).",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, п.20",
@@ -127,7 +140,20 @@
         ],
         "cooldown_sec": 20
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.20, ч.2",
+          "quote": "Все ранее принятые наличные деньги хранятся в специальных устройствах, находящихся на рабочем месте кассового работника, закрывающихся на ключ, предназначенных для хранения наличных денег (металлический шкаф, сейф, тележка, ящики стола, тумба).",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, п.20",
@@ -197,7 +223,20 @@
         ],
         "cooldown_sec": 20
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.20, ч.1",
+          "quote": "Наличные деньги принимаются и пересчитываются кассовым работником в присутствии клиента.",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, пп.19–20",
@@ -223,7 +262,20 @@
           "within_sec": 15.0
         }
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.19, пп.2",
+          "quote": "принимает банкноты с полистным пересчетом, монеты с пересчетом по кружкам с проверкой на подлинность и платежность наличных денег в соответствии с пунктами 57 и 58 Правил;",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, п.19(2), п.20",
@@ -249,7 +301,20 @@
           "within_sec": 60.0
         }
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.19, пп.1",
+          "quote": "проводит визуальную идентификацию клиента, вносящего наличные деньги, с документом, удостоверяющим его личность",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, пп.19,31",
@@ -275,7 +340,20 @@
           "within_sec": 10.0
         }
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.19, пп.6",
+          "quote": "выдает клиенту документ, подтверждающий проведение кассовой операции по приему наличных денег.",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, пп.19,31",
@@ -301,7 +379,20 @@
         ],
         "cooldown_sec": 30
       },
-      "rules": [],
+      "rules": [
+        {
+          "act": "Постановление Правления НБРК №231 от 29.11.2019 (рег. №19680), Правила ведения кассовых операций",
+          "point": "п.12",
+          "quote": "Хранение личных вещей, наличных денег и ценностей работников банка осуществляется вне кассового узла в порядке, установленном внутренними документами банка.",
+          "source_url": "https://adilet.zan.kz/rus/docs/V1900019680",
+          "api_url": "https://adilet.zan.kz/api/documents/by-ngr/V1900019680?language=rus",
+          "text_sha256": "1798a349b2326ba4c32a007a62db532ea6de906e71f0249a9de8dc81aa915de8",
+          "revision_id": "c4cd4052-63e3-475b-ba9e-93f23de13fdb",
+          "retrieved": "2026-10-18",
+          "verified": true,
+          "applicability": "Source clause verified; applicability to a specific clip remains for human review."
+        }
+      ],
       "source_status": "No automatic legal applicability claim; visible concern for human review only.",
       "context_source": {
         "act": "НБРК №231, п.12",

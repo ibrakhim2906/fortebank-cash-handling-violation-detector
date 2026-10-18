@@ -1,0 +1,7 @@
+[
+ {"name":"selected-dev30","env":{}},
+ {"name":"recall-rescue-dev30","env":{"AUDITOR_RECALL":"rescue"}},
+ {"name":"recall-localize-dev30","env":{"AUDITOR_RECALL":"localize"}},
+ {"name":"recall-on-dev30","env":{"AUDITOR_RECALL":"on"}},
+ {"name":"recall-on-reading-case-dev30","env":{"AUDITOR_RECALL":"on","AUDITOR_READING":"case"}}
+]
