@@ -25,7 +25,10 @@ def setup_run(tmp_path,monkeypatch,elapsed=None):
 
 def test_cached_sweep_advances_lazy_spatial_admission(tmp_path,monkeypatch):
     clock,payload,response,run=setup_run(tmp_path,monkeypatch,145)
+    from service.pipeline.spatial import crop_pair
     spatial=types.ModuleType('service.pipeline.spatial');spatial.__spec__=ModuleSpec(spatial.__name__,loader=None);spatial.time=time
+    # Lazy desk import needs the real crop helper; do not poison its retained binding.
+    spatial.crop_pair=crop_pair
     monkeypatch.setitem(sys.modules,spatial.__name__,spatial)
     def infer(path,deadline,requester):
         requester('http://127.0.0.1',payload,150)
@@ -33,12 +36,14 @@ def test_cached_sweep_advances_lazy_spatial_admission(tmp_path,monkeypatch):
         assert audit_deadline-spatial.time.monotonic()==20
         assert spatial.time.monotonic()+35>=audit_deadline
         for module in (analyze,auditor,vlm,video_analysis):assert module.time.monotonic()==1145
+        assert sys.modules['service.pipeline.desk'].time.monotonic()==1145
         return {'verdict':'no_violation','violations':[]},{'spatial_skipped':True}
     monkeypatch.setattr(analyze,'analyze_detailed',infer)
     result=run()
     assert result['status']=='done' and result['analysis']['spatial_skipped']
     assert result['budget_estimate_sec']==145 and result['elapsed_sec']==0
     assert spatial.time is time
+    assert sys.modules['service.pipeline.desk'].time is time
     assert all(module.time is time for module in (analyze,auditor,vlm,video_analysis))
 
 

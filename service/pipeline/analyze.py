@@ -18,6 +18,8 @@ def recipe_fingerprint():
            'perception_mode':os.environ.get('PERCEPTION_MODE','full'),
            'auditor_resolution':os.environ.get('AUDITOR_RESOLUTION','standard'),
            'auditor_scan':os.environ.get('AUDITOR_SCAN','full'),
+           'auditor_spatial':os.environ.get('AUDITOR_SPATIAL','off'),
+           'auditor_desk_rescan':os.environ.get('AUDITOR_DESK_RESCAN','off'),
            'auditor_workflow':os.environ.get('AUDITOR_WORKFLOW','original'),
            'auditor_confirmation':os.environ.get('AUDITOR_CONFIRMATION','strict'),
            'auditor_frames':os.environ.get('AUDITOR_FRAMES','16'),
@@ -37,6 +39,28 @@ def encode_jpeg(image):
     return jpeg.tobytes()
 
 
+def encode_inspection_jpeg(image):
+    """Bounded source-detail JPEG for opt-in crops, never public/coarse evidence."""
+    h,w=image.shape[:2]
+    for edge in [2048,1536,1024]:
+        ratio=min(1.,edge/max(h,w));sample=image if ratio==1. else cv2.resize(image,(max(1,round(w*ratio)),max(1,round(h*ratio))),interpolation=cv2.INTER_AREA)
+        for quality in [88,75,60]:
+            ok,jpeg=cv2.imencode('.jpg',sample,[cv2.IMWRITE_JPEG_QUALITY,quality])
+            if not ok:raise ValueError('Inspection encoding failed')
+            if jpeg.nbytes<=1024**2:return jpeg.tobytes()
+    raise ValueError('Inspection JPEG exceeds bounded frame budget')
+
+
+def source_sample(frame,index):
+    sample=dict(timestamp_sec=frame['timestamp_sec'],source_frame_index=frame['source_frame_index'],image=encode_jpeg(frame['image']))
+    if os.environ.get('AUDITOR_SPATIAL','off')=='open_state' or os.environ.get('AUDITOR_DESK_RESCAN','off')=='on':
+        # The service accepts at most300s, sampled at2fps. Keep bytes only;
+        #602samples allow timestamp rounding and cap auxiliary retention.
+        if index>=602:raise ValueError('Spatial inspection sample budget exceeded')
+        sample['inspection_image']=encode_inspection_jpeg(frame['image'])
+    return sample
+
+
 def cpu_fallback(path,deadline):
     from src.video_analysis import analyze_video
     artifact=config.DATA_PROC/'video-baseline-comparison/models/baseline.joblib'
@@ -51,8 +75,7 @@ def perception(path,deadline):
         rules=json.loads((config.ROOT/'service/rules.json').read_text())
         if any(spec.get('enabled') for spec in rules['types'].values()):
             raise ValueError('Frame-only mode cannot bypass an enabled object rule')
-        samples=[dict(timestamp_sec=f['timestamp_sec'],source_frame_index=f['source_frame_index'],image=encode_jpeg(f['image']))
-                 for f in iter_frames(path,deadline)]
+        samples=[source_sample(frame,index) for index,frame in enumerate(iter_frames(path,deadline))]
         # No detector was run. Empty *observations* means no factual claims;
         # never manufacture a zero-occupancy or absence timeline from it.
         return dict(frames=[],engine='source_frames_only_no_object_observations'),samples
@@ -63,7 +86,7 @@ def perception(path,deadline):
         detections=tracker.update(detector.detect(frame['image'],deadline),frame['timestamp_sec'])
         row={k:frame[k] for k in ['timestamp_sec','source_frame_index']}
         rows.append(dict(**row,detections=detections,foreground_person_tracks=[d['track_id'] for d in foreground_people(detections)]))
-        samples.append(dict(**row,image=encode_jpeg(frame['image'])))
+        samples.append(source_sample(frame,len(samples)))
     return dict(frames=rows,engine=_VERSION),samples
 
 

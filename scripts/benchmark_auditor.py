@@ -25,7 +25,8 @@ def pipeline_replay_clock(replayed):
     sees the same clock. Restore every module even when inference raises.
     """
     names=['service.pipeline.analyze','service.pipeline.auditor','service.pipeline.vlm','src.video_analysis']
-    if importlib.util.find_spec('service.pipeline.spatial') is not None:names.append('service.pipeline.spatial')
+    for optional in ['service.pipeline.spatial','service.pipeline.desk']:
+        if importlib.util.find_spec(optional) is not None:names.append(optional)
     modules=[importlib.import_module(name) for name in names]
     originals=[(module,module.time) for module in modules]
     real_time=time
@@ -82,7 +83,7 @@ def run_one(path,input_id,inputs,cache,runtime,*,use_cache):
         for index,f in enumerate(iter_frames(source,deadline)):
             d=detections['frames'][index]
             if d['source_frame_index']!=f['source_frame_index'] or abs(d['timestamp_sec']-f['timestamp_sec'])>1e-5:raise ValueError('Cached frame sampling differs')
-            frames.append(dict(timestamp_sec=f['timestamp_sec'],source_frame_index=f['source_frame_index'],image=pipeline.encode_jpeg(f['image'])))
+            frames.append(pipeline.source_sample(f,index))
         if len(frames)!=len(detections['frames']):raise ValueError('Cached frame count differs')
         replayed+=max(0,old['perception_sec']-(time.monotonic()-before))
         return detections,frames

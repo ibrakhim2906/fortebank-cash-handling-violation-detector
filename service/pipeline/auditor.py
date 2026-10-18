@@ -115,6 +115,10 @@ def refine_onset(event,frames,deadline,*,requester=None):
 
 
 def confirmed_observations(frames,deadline,*,requester=None,overview_count=None,allow_omissions=True):
+    desk=os.environ.get('AUDITOR_DESK_RESCAN','off')
+    if desk not in ['off','on']:raise ValueError('Unknown desk rescan mode')
+    spatial=os.environ.get('AUDITOR_SPATIAL','off')
+    if spatial not in ['off','open_state']:raise ValueError('Unknown spatial verification mode')
     policy=os.environ.get('AUDITOR_CONFIRMATION','strict')
     if policy not in ['strict','proposal','proposal_refine']:raise ValueError('Unknown confirmation policy')
     capacity=frame_limit();overview=choose(frames,overview_count or capacity);log=[];observations=[];catalogue=predicate_catalogue()
@@ -137,6 +141,12 @@ def confirmed_observations(frames,deadline,*,requester=None,overview_count=None,
             gaps=any(b['timestamp_sec']-a['timestamp_sec']>.600001 for a,b in zip(overview,overview[1:]))
             if not allow_omissions or not candidate.complete_phase_visible or len(frames)>len(overview) or gaps:continue
         onset=overview[candidate.onset_frame]['timestamp_sec'];evidence=overview[candidate.evidence_frame]['timestamp_sec']
+        if spatial=='open_state' and candidate.kind in {'safe_left_open','door_left_open'}:
+            from service.pipeline.spatial import verify_open_state
+            event,details=verify_open_state(candidate,frames,onset,evidence,deadline,requester=requester)
+            log.extend(details)
+            if event is not None:observations.append(event)
+            continue
         if policy in ['proposal','proposal_refine'] and candidate.kind not in OMISSIONS|TINY_OR_AMBIGUOUS:
             event=dict(type_id=candidate.kind,timecode_sec=onset,evidence_sec=evidence,
                        visible_fact=candidate.visible_fact,confidence=.8,
@@ -182,6 +192,10 @@ def confirmed_observations(frames,deadline,*,requester=None,overview_count=None,
         observations.append(dict(type_id=candidate.kind,timecode_sec=focused[checked.onset_frame]['timestamp_sec'],
                                  evidence_sec=focused[checked.evidence_frame]['timestamp_sec'],visible_fact=checked.visible_fact,
                                  confidence=.8,origin='confirmed_self_hosted_observation',complete_phase_visible=checked.complete_phase_visible))
+    if desk=='on' and not observations:
+        from service.pipeline.desk import desk_rescan
+        observations,details=desk_rescan(frames,deadline,requester=requester)
+        log.extend(details)
     return observations,log
 
 
