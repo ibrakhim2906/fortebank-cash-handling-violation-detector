@@ -76,7 +76,7 @@
   function renderEvaluation(){
     finishMotion();
     const index=Number($('recipe').value),r=snapshot.recipes[index],base=snapshot.recipes[0],last=snapshot.recipes.at(-1);
-    $('overview-title').textContent=`Detection rose from ${base.tp}/${base.tp+base.fn} to ${last.tp}/${last.tp+last.fn} across three iterations.`;
+    $('overview-title').textContent=`Detection rose from ${base.tp}/${base.tp+base.fn} to ${last.tp}/${last.tp+last.fn} across ${snapshot.recipes.length} iterations.`;
     $('measured-headline').textContent=`${r.correct} of ${r.n_videos} verdicts correct.`;
     $('scope-total').textContent=`${r.n_videos} previously reviewed videos`;
     $('evaluation-priority-title').textContent=`${r.fn} missed recordings. ${r.fp} false alarms.`;
@@ -113,8 +113,8 @@
       const embedded=$('export-evaluation-data');
       if(embedded)snapshot=JSON.parse(embedded.textContent);
       else{const response=await fetch('/static/evaluation.json',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!response.ok)throw new Error('Metrics unavailable');snapshot=await response.json();}
-      if(!Array.isArray(snapshot.recipes)||snapshot.recipes.length!==3||!snapshot.recipes.every(r=>Number.isFinite(r.accuracy)&&r.n_videos>0))throw new Error('Invalid metric snapshot');
-      $('recipe').replaceChildren();snapshot.recipes.forEach((r,i)=>{const option=element('option',r.name,$('recipe'));option.value=i;});$('recipe').value='2';$('recipe').disabled=false;
+      if(!Array.isArray(snapshot.recipes)||snapshot.recipes.length<3||!snapshot.recipes.every(r=>Number.isFinite(r.accuracy)&&r.n_videos>0))throw new Error('Invalid metric snapshot');
+      $('recipe').replaceChildren();snapshot.recipes.forEach((r,i)=>{const option=element('option',r.name,$('recipe'));option.value=i;});$('recipe').value=String(snapshot.recipes.length-1);$('recipe').disabled=false;
       $('snapshot').textContent=snapshot.snapshot_label;
       $('source-caption').textContent=`Snapshot: ${snapshot.snapshot_label}. Sources: ${snapshot.recipes.map(r=>r.source).join('; ')}. SHA-256 source hashes are included in the bundled aggregate snapshot.`;
       renderEvaluation();
