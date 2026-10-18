@@ -96,3 +96,5 @@
 | 2026-10-18 07:56 | Independent grouped comparison, complete frozen30DEV | 17/30 correct; TP14/FN2/FP10, failed/excluded2; hit1s3/16, hit2s5/16, conditionaltype5/5, typedcoverage5/16; proxy45.885416667→40.416666667. 96fresh+3exactreplays, 0budgetflags; engines{"mission-v1":28,"mission-v1-degraded":2}; audit{"audit_complete":24,"audit_complete_missing":2,"audit_incomplete":4,"incomplete_positive":4}, groupfailures7, budgetskips0, maxbudgetestimate136.38825003616512s. | DROP; cached timing does not qualify public API latency. No promotion. |
 
 Pending (Claude port, not yet run): `AUDITOR_RECALL=rescue`, `=localize`, `=on`, and `=on` + `AUDITOR_READING=case` on DEV30 with the selected 32B recipe. Rows below are added only from real runs.
+
+| 2026-10-18 04:13 UTC | Claude port, recall off (selected recipe), isolated /workspace/claude-recall, frozen30DEV | 23/30; TP12/FN4/FP3, failed0; hit1s4/16, hit2s5/16, typedcoverage5/16; 0fresh+39exactreplays, 0budgetflags; 30/30 results identical to mission-storage-veto-dev30; 87s. | BASELINE PARITY: the port is inert when off. Artifacts data/processed/mission-claude-selected-dev30*. |
