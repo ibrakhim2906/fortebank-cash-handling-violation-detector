@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Local action review</title>
+  <style>
+    :root{color-scheme:light;font-family:system-ui,sans-serif;color:#1b2c32;background:#f2f5f4}
+    *{box-sizing:border-box}body{max-width:1240px;margin:0 auto;padding:24px}h1{font-size:1.65rem;margin:0 0 8px}
+    h2{font-size:1.1rem;margin-top:0}p{line-height:1.5}.muted{color:#52666b;font-size:.92rem}
+    .panel{background:white;border:1px solid #d5dfdc;border-radius:12px;padding:20px;margin-top:16px}
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}.row>*{flex:1;min-width:130px}
+    label{display:block;font-size:.9rem;font-weight:600;margin-bottom:5px}input,select,button{font:inherit;border-radius:6px;padding:9px;border:1px solid #a8bab5;width:100%;background:white;color:inherit}
+    button{background:#176a59;color:white;cursor:pointer;border-color:#176a59}button.secondary{background:#eef5f2;color:#185646}button:disabled{opacity:.55;cursor:default}
+    input[type=checkbox]{width:auto;margin:0 8px 0 0}input[type=password]{min-width:230px}
+    .layout{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(380px,1.1fr);gap:20px}
+    video{width:100%;height:500px;background:#142527;border-radius:8px;object-fit:contain}.actions{margin:14px 0}
+    .action{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #edf0ef}.action label{font-weight:400;margin:0}
+    #message{min-height:24px;line-height:1.5}.error{color:#a52b25}.success{color:#166347}.check{font-weight:400;line-height:1.45}
+    #workspace[hidden]{display:none}.summary{white-space:pre-wrap;font:inherit}.small{font-size:.85rem}
+    @media(max-width:800px){body{padding:14px}.layout{grid-template-columns:1fr}video{height:400px}}
+  </style>
+</head>
+<body>
+  <h1>Local action review</h1>
+  <p class="muted">Watch directly observable actions and save a local annotation. Action review is not a violation judgment. Media and labels stay on this computer; do not paste clip descriptions or screenshots into chat.</p>
+  <section class="panel">
+    <div class="row">
+      <div><label for="mode">Review focus</label><select id="mode"><option value="transfer">Object-transfer pilot</option><option value="general">All action labels</option><option value="pretrained">Pretrained probe (read only)</option></select></div>
+      <div><label for="key">Local API key</label><input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the existing local service key"></div>
+      <div><label for="reviewer">Reviewer name or initials</label><input id="reviewer" autocomplete="off" maxlength="64" placeholder="Your initials"></div>
+      <div style="flex:0 1 150px"><button id="connect">Load queue</button></div>
+    </div>
+    <p class="muted small">The key stays in this tab's memory. Nothing is saved to browser storage. The queue contains development footage only; official binary targets are hidden.</p>
+    <div id="message" role="status" aria-live="polite"></div>
+  </section>
+  <main id="workspace" hidden>
+    <section class="panel">
+      <div class="row">
+        <div style="flex:3"><label for="task">Development review task</label><select id="task"></select></div>
+        <div style="flex:0 1 140px"><button id="next" class="secondary">Next unreviewed</button></div>
+      </div>
+      <p id="taskInfo" class="muted"></p>
+      <div class="layout">
+        <div>
+          <video id="video" controls preload="metadata" playsinline></video>
+          <div class="row" style="margin-top:10px">
+            <button id="anchor" class="secondary">Go to anchor</button>
+            <button id="back" class="secondary">Back 2 seconds</button>
+            <button id="forward" class="secondary">Forward 2 seconds</button>
+          </div>
+          <p id="playbackHint" class="muted small">The anchor marks an existing annotation or a review starting point, not a verified action boundary. Watch the interval before labeling; extend it when needed.</p>
+        </div>
+        <div>
+          <div id="pretrainedFields" hidden>
+            <h2>Unverified pretrained predictions</h2>
+            <p class="muted small">These are uncalibrated scores among 600 pretrained classes, not verified actions, bank-specific confidence or violation findings. No annotation is created. Only the selected training recordings appear here.</p>
+            <label for="probeWindow">Video window</label><select id="probeWindow"></select>
+            <button id="seekProbe" class="secondary" style="margin-top:8px">Play from selected window</button>
+            <label for="probeClass" style="margin-top:14px">Pretrained target class</label><select id="probeClass"></select>
+            <button id="strongestProbe" class="secondary" style="margin-top:8px">Show strongest model window (unverified)</button>
+            <div id="probePredictions" class="summary muted" style="margin-top:14px"></div>
+          </div>
+          <div id="annotationFields">
+          <h2>Observed interval</h2>
+          <p id="proposal" class="muted small" hidden></p>
+          <div class="row">
+            <div><label for="start">Start (seconds)</label><input id="start" type="number" min="0" step="0.1"></div>
+            <div><label for="end">End (seconds)</label><input id="end" type="number" min="0" step="0.1"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="setStart" class="secondary">Set start from player</button>
+            <button id="setEnd" class="secondary">Set end from player</button>
+          </div>
+          <p><label class="check"><input id="entire" type="checkbox">I watched the entire clip; use full-clip coverage.</label></p>
+          <label for="visibility">Visibility in the selected interval</label>
+          <select id="visibility"><option value="clear">Clear</option><option value="partial">Partial / occluded</option><option value="unobservable">Cannot observe reliably</option></select>
+          <div id="transferFields" hidden>
+            <p id="transferDefinition" class="muted small"></p>
+            <label for="transferChoice">What happens in the watched interval?</label>
+            <select id="transferChoice"></select>
+            <p class="muted small">For a transfer, mark the whole exchange in at most 8 seconds. For a no-transfer example, watch at least 8 complete seconds. Unclear or hidden exchanges belong in “I cannot tell”.</p>
+            <div id="evidenceFields" hidden>
+              <label for="evidence">Supporting frame (seconds)</label><input id="evidence" type="number" min="0" step="0.01" placeholder="Choose a supporting frame">
+              <button id="setEvidence" class="secondary" style="margin-top:8px">Use current player frame</button>
+              <p><label class="check"><input id="evidenceConfirmed" type="checkbox">This frame visibly supports the exchange between two people.</label></p>
+            </div>
+            <p id="absenceField" hidden><label class="check"><input id="absenceConfirmed" type="checkbox">I checked the complete selected interval and saw no transfer between people.</label></p>
+          </div>
+          <div id="actions" class="actions"></div>
+          <p id="generalHint" class="muted small">Present = directly observed. Absent = watched the complete selected interval and did not observe it. Unknown = not checked or unclear. A routine action can occur in either official video class.</p>
+          <label id="statusLabel" for="status">Review outcome</label>
+          <select id="status"><option value="verified">Human reviewed</option><option value="ambiguous">Ambiguous / needs another review</option></select>
+          <p><label class="check"><input id="watched" type="checkbox">I watched the selected coverage and checked these action labels.</label></p>
+          <button id="save">Save local review</button>
+          <p id="saved" class="muted small" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="panel"><h2>Review progress</h2><div id="summary" class="summary muted"></div></section>
+  </main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+let tasks = [], vocabulary = [], selected = null, objectUrl = null, loadToken = 0;
+let mediaController = null, clearMediaListeners = null;
+let playableTaskId = null, saving = false;
+let reviewMode = 'transfer';
+if(window.location.hash==='#pretrained')$('mode').value='pretrained';
+const player = $('video');
+const reviewBase = () => '/api/review'+(reviewMode==='general'?'':'/'+reviewMode);
+function message(text, isError=false) { $('message').textContent=text; $('message').className=isError?'error':'success'; }
+function updateSaveState() { $('save').disabled=reviewMode==='pretrained'||saving||!selected||playableTaskId!==selected.task_id; }
+async function api(path, options={}) {
+  const headers={...(options.headers||{}),'X-API-Key':$('key').value.trim()};
+  const response=await fetch(path,{...options,headers,cache:'no-store',credentials:'omit'});
+  if(!response.ok) {
+    let detail='Local request failed ('+response.status+').';
+    try { const body=await response.json(); if(typeof body.detail==='string')detail=body.detail; } catch(_) {}
+    throw new Error(detail);
+  }
+  return response;
+}
+function taskText(task,index) {
+  return 'Task '+String(index+1).padStart(2,'0')+' · '+task.task_id.slice(0,8)+' · '+(task.pool?task.pool+' pool · ':'')+task.duration_sec.toFixed(1)+' sec · '+task.review_status;
+}
+function drawTasks() {
+  $('task').replaceChildren(...tasks.map((task,index)=>{
+    const option=document.createElement('option'); option.value=task.task_id; option.textContent=taskText(task,index);return option;
+  }));
+  if(selected)$('task').value=selected.task_id;
+}
+function drawActions() {
+  $('actions').replaceChildren(...vocabulary.map(action=>{
+    const row=document.createElement('div');row.className='action';
+    const label=document.createElement('label');label.htmlFor='action-'+action.action_id;label.textContent=action.label;
+    const select=document.createElement('select');select.id=label.htmlFor;select.dataset.actionId=action.action_id;
+    for(const [value,text] of [['unknown','Unknown'],['present','Present'],['absent','Absent']]) {
+      const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option);
+    }
+    row.append(label,select);return row;
+  }));
+}
+function drawProbeWindow() {
+  if(reviewMode!=='pretrained'||!selected)return;
+  const window=selected.windows[Number($('probeWindow').value)];
+  $('probePredictions').textContent=window.predictions.map(item=>item.label+': uncalibrated softmax '+
+    item.score.toPrecision(4)+' · rank '+item.rank_1based+' / 600').join('\n');
+}
+async function refreshSummary() {
+  const data=await (await api(reviewBase()+'/summary')).json();
+  if(reviewMode==='pretrained'){
+    $('summary').textContent=data.train_recordings+' training recordings · '+data.windows+' analyzed windows.\n'+
+      'Blind recordings: '+data.blind_recordings+'; holdout recordings: '+data.holdout_recordings+'.\n'+
+      'Read-only model predictions. Verified labels created: 0. No action-accuracy score is established.';
+    return;
+  }
+  if(reviewMode==='transfer'){
+    $('summary').textContent='Reviewed '+data.human_reviewed_tasks+' / '+data.tasks+' tasks; '+data.ambiguous_tasks+' uncertain.\n'+
+      ['train','blind'].map(pool=>pool+' pool: '+data.pools[pool].positive_groups+' transfer recordings, '+data.pools[pool].hard_negative_groups+' relocation/contact counterexample recordings. Need 4 of each from 8 distinct recordings.').join('\n')+
+      '\nBackground reviews are saved but do not fill the hard-counterexample quota. These counts are not a final balanced selection.';
+    return;
+  }
+  // The summary endpoint returns aggregate counts only.
+  $('summary').textContent=Object.entries(data).map(([key,value])=>key.replaceAll('_',' ')+': '+(typeof value==='object'?JSON.stringify(value):value)).join('\n');
+}
+async function chooseTask(taskId) {
+  const token=++loadToken;
+  if(mediaController)mediaController.abort();
+  mediaController=new AbortController();
+  if(clearMediaListeners){clearMediaListeners();clearMediaListeners=null;}
+  playableTaskId=null;updateSaveState();
+  player.pause();player.removeAttribute('src');player.load();
+  if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
+  selected=tasks.find(task=>task.task_id===taskId);
+  if(!selected)return;
+  const probe=reviewMode==='pretrained';
+  $('annotationFields').hidden=probe;$('pretrainedFields').hidden=!probe;
+  $('next').textContent=probe?'Next recording':'Next unreviewed';
+  $('playbackHint').textContent=probe?'Select a model window to seek the original video. Predictions remain unverified and cannot be saved as labels here.':
+    'The anchor marks an existing annotation or a review starting point, not a verified action boundary. Watch the interval before labeling; extend it when needed.';
+  if(probe){
+    $('probeWindow').replaceChildren(...selected.windows.map((window,index)=>{
+      const option=document.createElement('option');option.value=index;
+      option.textContent=window.start_sec.toFixed(2)+'–'+window.end_sec.toFixed(2)+' seconds';return option;
+    }));
+    $('probeClass').replaceChildren(...selected.windows[0].predictions.map(item=>{
+      const option=document.createElement('option');option.value=item.label;option.textContent=item.label;return option;
+    }));
+    drawProbeWindow();
+  }
+  drawActions();$('watched').checked=false;$('entire').checked=false;$('visibility').value='clear';$('status').value='verified';$('saved').textContent='';
+  $('start').value=selected.interval.start_sec.toFixed(2);$('end').value=String(selected.interval.end_sec);
+  $('start').max=selected.duration_sec;$('end').max=selected.duration_sec;
+  $('start').disabled=false;$('end').disabled=false;
+  $('anchor').disabled=selected.anchor_sec===null;
+  $('taskInfo').textContent='Task '+selected.task_id+' · Duration '+selected.duration_sec.toFixed(2)+' seconds. '+(selected.ambiguous_anchor?'Multiple official anchors disagree; each remains a separate review task. ':'')+'Current status: '+selected.review_status+'.';
+  $('transferFields').hidden=reviewMode!=='transfer';
+  for(const id of ['actions','generalHint','statusLabel','status'])$(id).hidden=reviewMode==='transfer';
+  $('transferChoice').value='';$('evidence').value='';$('evidenceConfirmed').checked=false;$('absenceConfirmed').checked=false;
+  $('evidenceFields').hidden=true;$('absenceField').hidden=true;
+  if(reviewMode==='transfer'&&selected.human_review){
+    const previous=selected.human_review;
+    $('transferChoice').value=previous.choice;$('start').value=previous.interval.start_sec;$('end').value=previous.interval.end_sec;
+    $('visibility').value=previous.visibility;$('evidence').value=previous.evidence_sec??'';
+    $('entire').checked=previous.coverage==='entire_clip';$('start').disabled=$('end').disabled=$('entire').checked;
+    updateTransferChoice();
+  }
+  $('proposal').hidden=!selected.proposal;
+  if(selected.proposal){const proposed=selected.proposal.actions.map(action=>(vocabulary.find(item=>item.action_id===action.action_id)?.label||action.action_id)+': '+action.presence).join('; ');$('proposal').textContent='Unverified local model proposal ('+selected.proposal.model_id+'): '+proposed+'. Check the footage independently; form values are not filled from this proposal.';}
+  updateSaveState();message('Loading local media…');
+  try {
+    const response=await api(reviewBase()+'/media/'+encodeURIComponent(selected.task_id),{signal:mediaController.signal});
+    const blob=await response.blob();
+    if(token!==loadToken)return;
+    const mediaTaskId=selected.task_id;
+    const current=()=>token===loadToken&&selected?.task_id===mediaTaskId;
+    const metadata=()=>{
+      if(!current())return;
+      const start=Number($('start').value);
+      if(Number.isFinite(start))player.currentTime=Math.max(0,Math.min(player.duration,start));
+    };
+    const canPlay=()=>{
+      if(!current()||player.error||player.readyState<3)return;
+      playableTaskId=mediaTaskId;updateSaveState();
+      message(probe?'Ready. Inspect the unverified predictions alongside the original video.':'Ready. Watch the selected interval and mark only what is observable.');
+    };
+    const playbackError=()=>{
+      if(!current())return;
+      playableTaskId=null;updateSaveState();
+      const reasons={1:'Playback was interrupted.',2:'The browser could not read the local media.',3:'The browser could not decode this video.',4:'This browser does not support this video format.'};
+      message((reasons[player.error?.code]||'Local video playback failed.')+' Review saving is disabled. Try loading the task again or use a browser with H.264 video support.',true);
+    };
+    player.addEventListener('loadedmetadata',metadata);
+    player.addEventListener('canplay',canPlay);
+    player.addEventListener('error',playbackError);
+    clearMediaListeners=()=>{
+      player.removeEventListener('loadedmetadata',metadata);
+      player.removeEventListener('canplay',canPlay);
+      player.removeEventListener('error',playbackError);
+    };
+    objectUrl=URL.createObjectURL(blob);player.src=objectUrl;player.load();
+    message('Checking local video playback…');
+  } catch(error) {if(error.name!=='AbortError')message(error.message,true);}
+}
+$('connect').addEventListener('click',async()=>{
+  $('connect').disabled=true;
+  try {
+    reviewMode=$('mode').value;
+    const data=await (await api(reviewBase()+'/tasks')).json();tasks=data.tasks;vocabulary=data.actions;
+    $('transferDefinition').textContent=data.definition||'';
+    $('transferChoice').replaceChildren(...[{value:'',label:'Choose after watching'},...(data.choices||[])].map(item=>{
+      const option=document.createElement('option');option.value=item.value;option.textContent=item.label;return option;
+    }));
+    drawTasks();$('workspace').hidden=false;await refreshSummary();
+    const first=tasks.find(task=>task.review_status!=='verified')||tasks[0];
+    if(first){$('task').value=first.task_id;await chooseTask(first.task_id);}else message('No development review tasks are available.');
+  } catch(error){message(error.message,true);}finally{$('connect').disabled=false;}
+});
+$('mode').addEventListener('change',()=>{
+  ++loadToken;if(mediaController)mediaController.abort();player.pause();player.removeAttribute('src');player.load();
+  if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
+  selected=null;playableTaskId=null;tasks=[];$('workspace').hidden=true;updateSaveState();
+  message('Click Load queue to open this review focus.');
+});
+function updateTransferChoice(){
+  const value=$('transferChoice').value;
+  $('evidenceFields').hidden=value!=='transfer';
+  $('absenceField').hidden=!['same_person_relocation','contact_only','background'].includes(value);
+  $('evidenceConfirmed').checked=false;$('absenceConfirmed').checked=false;
+}
+$('transferChoice').addEventListener('change',updateTransferChoice);
+$('setEvidence').addEventListener('click',()=>{$('evidence').value=player.currentTime.toFixed(2);$('evidenceConfirmed').checked=false;});
+$('task').addEventListener('change',()=>chooseTask($('task').value));
+$('probeWindow').addEventListener('change',drawProbeWindow);
+$('strongestProbe').addEventListener('click',()=>{
+  if(reviewMode!=='pretrained'||!selected)return;
+  const label=$('probeClass').value;
+  const score=window=>window.predictions.find(item=>item.label===label).score;
+  let best=0;selected.windows.forEach((window,index)=>{if(score(window)>score(selected.windows[best]))best=index;});
+  $('probeWindow').value=String(best);drawProbeWindow();
+  if(playableTaskId===selected.task_id)player.currentTime=selected.windows[best].start_sec;
+  message('Model-selected window, unverified. A higher score does not establish that the action happened.');
+});
+$('seekProbe').addEventListener('click',()=>{
+  if(reviewMode!=='pretrained'||!selected||playableTaskId!==selected.task_id)return;
+  player.currentTime=selected.windows[Number($('probeWindow').value)].start_sec;
+  player.play().catch(()=>message('Press Play in the video player.'));
+});
+$('next').addEventListener('click',()=>{
+  if(!tasks.length)return;const index=tasks.findIndex(task=>task.task_id===selected?.task_id);
+  if(reviewMode==='pretrained'){const task=tasks[(index+1)%tasks.length];$('task').value=task.task_id;chooseTask(task.task_id);return;}
+  let next=null;for(let step=1;step<=tasks.length;step++){const task=tasks[(index+step)%tasks.length];if(task.review_status!=='verified'){next=task;break;}}
+  if(next){$('task').value=next.task_id;chooseTask(next.task_id);}else message('All queued tasks have a human review. Revisit any uncertain interval if needed.');
+});
+$('anchor').addEventListener('click',()=>{if(selected?.anchor_sec!==null)player.currentTime=Math.max(0,selected.anchor_sec-2);});
+$('back').addEventListener('click',()=>{player.currentTime=Math.max(0,player.currentTime-2);});
+$('forward').addEventListener('click',()=>{player.currentTime=Math.min(player.duration||0,player.currentTime+2);});
+$('setStart').addEventListener('click',()=>{if(!$('entire').checked)$('start').value=player.currentTime.toFixed(2);});
+$('setEnd').addEventListener('click',()=>{if(!$('entire').checked&&selected)$('end').value=Math.min(selected.duration_sec,Number(player.currentTime.toFixed(2)));});
+$('entire').addEventListener('change',()=>{
+  const all=$('entire').checked;$('start').disabled=all;$('end').disabled=all;
+  if(all&&selected){$('start').value='0';$('end').value=selected.duration_sec;}
+});
+$('save').addEventListener('click',async()=>{
+  if(saving)return;
+  const taskId=selected?.task_id;
+  try {
+    if(reviewMode==='pretrained')throw new Error('Pretrained predictions are read only and cannot be saved as verified labels.');
+    if(!selected)throw new Error('Choose a review task first.');
+    if(playableTaskId!==taskId||player.error)throw new Error('Wait until this video is playable before saving a review.');
+    const reviewer=$('reviewer').value.trim();if(!reviewer)throw new Error('Enter your reviewer name or initials.');
+    if(!$('watched').checked)throw new Error('Watch the selected coverage and confirm that you checked the labels.');
+    const start=Number($('start').value),end=Number($('end').value);
+    if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>selected.duration_sec)throw new Error('Choose an interval within the clip, with end after start.');
+    let review;
+    if(reviewMode==='transfer'){
+      const choice=$('transferChoice').value;
+      if(!choice)throw new Error('Choose what happened after watching the interval.');
+      if(choice!=='uncertain'&&$('visibility').value!=='clear')throw new Error('Choose “I cannot tell” when the exchange is hidden or unclear.');
+      const evidence=choice!=='transfer'||$('evidence').value===''?null:Number($('evidence').value);
+      if(choice==='transfer'&&(end-start>8||evidence===null||evidence<start||evidence>end||!$('evidenceConfirmed').checked))throw new Error('Mark the whole transfer in at most 8 seconds, select a supporting frame inside it and confirm the evidence.');
+      if(['same_person_relocation','contact_only','background'].includes(choice)&&(end-start<8||!$('absenceConfirmed').checked))throw new Error('A counterexample needs at least 8 fully watched seconds and the no-transfer confirmation.');
+      review={task_id:taskId,reviewer_id:reviewer,choice,interval:{start_sec:start,end_sec:end},
+        coverage:$('entire').checked?'entire_clip':'interval',visibility:$('visibility').value,watched:true,
+        evidence_sec:evidence,evidence_confirmed:$('evidenceConfirmed').checked,absence_confirmed:$('absenceConfirmed').checked};
+    }else{
+      let actions=Array.from($('actions').querySelectorAll('select')).map(select=>({action_id:select.dataset.actionId,presence:select.value}));
+      if($('status').value==='verified'){
+        actions=actions.filter(action=>action.presence!=='unknown');
+        if(!actions.length)throw new Error('Check at least one action, or save this interval as ambiguous.');
+        if(actions.some(action=>action.action_id==='unknown_observable_action'))throw new Error('An unclassified action must be saved as ambiguous.');
+        if($('visibility').value==='unobservable'||($('visibility').value!=='clear'&&actions.some(action=>action.presence==='absent')))throw new Error('Reliable action absence requires clear interval visibility.');
+      }
+      review={task_id:taskId,reviewer_id:reviewer,status:$('status').value,interval:{start_sec:start,end_sec:end},
+        coverage:$('entire').checked?'entire_clip':'interval',visibility:$('visibility').value,actions,provenance:{kind:'human_review'}};
+    }
+    saving=true;updateSaveState();
+    const result=await (await api(reviewBase()+'/labels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(review)})).json();
+    const savedTask=tasks.find(task=>task.task_id===taskId);
+    if(savedTask){
+      savedTask.review_status=result.status;
+      if(reviewMode==='transfer')savedTask.human_review={choice:review.choice,interval:review.interval,
+        coverage:review.coverage,visibility:review.visibility,evidence_sec:review.evidence_sec,revision:result.revision};
+    }
+    drawTasks();await refreshSummary();
+    if(selected?.task_id===taskId){
+      $('saved').textContent='Saved locally as revision '+result.revision+'. Previous revisions are preserved.';
+      message('Review saved. Continue with Next unreviewed.');
+    }
+  } catch(error){if(!taskId||selected?.task_id===taskId)message(error.message,true);}
+  finally{saving=false;updateSaveState();}
+});
+window.addEventListener('beforeunload',()=>{if(clearMediaListeners)clearMediaListeners();if(objectUrl)URL.revokeObjectURL(objectUrl);if(mediaController)mediaController.abort();});
+</script>
+</body>
+</html>

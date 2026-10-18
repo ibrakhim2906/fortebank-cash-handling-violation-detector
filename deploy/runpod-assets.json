@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "runtime_release": "b11707",
+  "runtime_assets": [
+    {
+      "path": "tools/local-action-model/runpod-b11707-cuda128/llama-b11707-bin-ubuntu-cuda-12.8-x64.tar.gz",
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11707/llama-b11707-bin-ubuntu-cuda-12.8-x64.tar.gz",
+      "size": 172731212,
+      "sha256": "208d228a2e752b91ebb15717f9116915a1704f2af644ee278d4b4d7911199e6a"
+    },
+    {
+      "path": "tools/local-action-model/runpod-b11707-cuda128/cudart-llama-b11707-bin-ubuntu-cuda-12.8-x64.tar.gz",
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11707/cudart-llama-b11707-bin-ubuntu-cuda-12.8-x64.tar.gz",
+      "size": 594377569,
+      "sha256": "a0698562c748ea4ffcf2631f13ca1429c3b794e67272066053c21c607ade5ebf"
+    }
+  ],
+  "models": {
+    "30b": {
+      "model_id": "Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF",
+      "revision": "f54435e6cc31258f04b0969105c3f6badb197931",
+      "license": "apache-2.0",
+      "assets": [
+        {
+          "path": "models/local-action-model/runpod-30b-v1/Qwen3VL-30B-A3B-Instruct-Q4_K_M.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/f54435e6cc31258f04b0969105c3f6badb197931/Qwen3VL-30B-A3B-Instruct-Q4_K_M.gguf",
+          "size": 18556687168,
+          "sha256": "87bb374d849f80ebdfabb304189fac9e0bd35a0f74506e6a59c51b206cbe863b"
+        },
+        {
+          "path": "models/local-action-model/runpod-30b-v1/mmproj-Qwen3VL-30B-A3B-Instruct-F16.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/f54435e6cc31258f04b0969105c3f6badb197931/mmproj-Qwen3VL-30B-A3B-Instruct-F16.gguf",
+          "size": 1083499584,
+          "sha256": "cae72cf123cc9e08d553cd5a5055d6d3cf0f82652aa41c3e4aa424cda9a26f7f"
+        }
+      ]
+    },
+    "8b": {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct-GGUF",
+      "revision": "5bcaa9cc11a22c7ddeade75f0c84b51e43b3f7ab",
+      "license": "apache-2.0",
+      "assets": [
+        {
+          "path": "models/local-action-model/runpod-8b-v1/Qwen3VL-8B-Instruct-Q4_K_M.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/5bcaa9cc11a22c7ddeade75f0c84b51e43b3f7ab/Qwen3VL-8B-Instruct-Q4_K_M.gguf",
+          "size": 5027784800,
+          "sha256": "67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2"
+        },
+        {
+          "path": "models/local-action-model/runpod-8b-v1/mmproj-Qwen3VL-8B-Instruct-F16.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/5bcaa9cc11a22c7ddeade75f0c84b51e43b3f7ab/mmproj-Qwen3VL-8B-Instruct-F16.gguf",
+          "size": 1159029824,
+          "sha256": "ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38"
+        }
+      ]
+    }
+  },
+  "base_image": "runpod/base@sha256:fe1287968710a5cb5dc8835f1818856ecfa20057eec8b46a76495f81182788e5",
+  "base_tag": "runpod/base:1.4.1-cuda1281-ubuntu2404",
+  "provider_cash_cap_usd": "15.00",
+  "provider_hourly_quote_max_usd": "0.59",
+  "gpu_count": 1,
+  "container_disk_gb": 20,
+  "volume_disk_gb": 60,
+  "http_port": 8000,
+  "private_model_port": 8003,
+  "tcp_port": 22
+}

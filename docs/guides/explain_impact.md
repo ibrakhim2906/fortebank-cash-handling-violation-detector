@@ -2,9 +2,11 @@
 
 A bank jury needs two things beyond a score: **why** the model decides, and **what it is worth in ₸**.
 
+Use one selected run throughout (`--run-dir <path>` or `DATATHON_RUN_DIR`). LightGBM is the delivered model; CatBoost/blend are comparison-only. Set agreed cost assumptions before starting development. After development and sanity checks, run impact to freeze the LightGBM policy, explicitly finalize/evaluate the holdout with `uv run python -m src.train --stage finalize`, then generate final explanations. The manifest rejects stale/mismatched artifacts and accidental repeat finalization. Value selected on development OOF is labeled as such; the locked policy's holdout results are in `holdout.json`.
+
 ## Explanations — `uv run python -m src.explain`
 - Global: top drivers (`reports/feature_importance.png`). Rename features into plain words for slides.
-- Individual: 3 example clients (highest risk, lowest risk, borderline) with top 5 reasons each, in `reports/explanations.md`.
+- Individual: 3 example applications (highest risk, lowest risk, nearest the frozen threshold) with top 5 reasons each, in `reports/explanations.md`. Use test rows when available; no test labels are required.
 - Write reasons the way a credit officer would say them: "flagged because 4 late payments in the last 90 days and utilisation above 90%". No raw column names on slides.
 - Sanity: do the top drivers make business sense? If a driver is weird, it may be leakage or an insight — find out which.
 

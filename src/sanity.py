@@ -1,23 +1,39 @@
 """Leakage and sanity checks. Run after every feature change: uv run python -m src.sanity"""
+import argparse
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
 from src import config as C
+from src import artifacts as A
 from src import models as M
 from src.eval import HIGHER_IS_BETTER, cross_validate, make_folds
 from src.features import build_dataset, to_model_frame
 
 
 def main():
+    selector = argparse.ArgumentParser(add_help=False)
+    selector.add_argument("--task", choices=["tabular", "video", "transfer-pilot"], default="tabular")
+    selected, remaining = selector.parse_known_args()
+    if selected.task == "transfer-pilot":
+        from src.video_transfer_pilot import sanity_main
+        raise SystemExit(sanity_main(remaining))
+    if selected.task == "video":
+        from src.video_sanity import main as video_main
+        return video_main(remaining)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run-dir")
+    args = parser.parse_args(remaining)
+    A.configure_run(args.run_dir)
     C.REPORTS.mkdir(parents=True, exist_ok=True)
     train, test = build_dataset()
-    train = train.reset_index(drop=True)
+    train = A.development_rows(train).reset_index(drop=True)
     X, X_test = to_model_frame(train, test)
     y = train[C.TARGET].reset_index(drop=True)
     folds = make_folds(train)
-    lines, problems = ["# Sanity report", ""], []
+    lines, problems = ["# Sanity report — development population only", "",
+                       "Reserved holdout labels are excluded from all pre-finalization scans.", ""], []
 
     # 1. duplicate IDs
     if C.ID_COL in train.columns:
@@ -49,7 +65,9 @@ def main():
     # 3. shuffled-target test
     rng = np.random.default_rng(C.SEED)
     y_shuf = pd.Series(rng.permutation(y.values))
-    shuf = cross_validate(M.fit_lgbm, X, y_shuf, folds)["score"]
+    from src.train import fold_predict
+    raw_inputs = A.inputs(train)
+    shuf = cross_validate(fold_predict("lgbm"), raw_inputs, y_shuf, folds)["score"]
     dummy = cross_validate(M.fit_dummy, X, y_shuf, folds)["score"]
     gain = (shuf - dummy) if HIGHER_IS_BETTER else (dummy - shuf)
     lines.append(f"- Shuffled-target LightGBM {C.METRIC}: {shuf:.4f} (dummy on shuffled: {dummy:.4f})")
@@ -80,6 +98,11 @@ def main():
     report = "\n".join(lines)
     (C.REPORTS / "sanity.md").write_text(report, encoding="utf-8")
     print(report)
+    A.write_json(C.REPORTS / "sanity.json", {"problems": problems, "shuffled_score": shuf,
+                                             "dummy_score": dummy, "adversarial_score": adv if X_test is not None else None,
+                                             "rows": len(train)})
+    if problems:
+        raise SystemExit("Sanity checks failed; stop and investigate reports/sanity.md")
 
 
 if __name__ == "__main__":

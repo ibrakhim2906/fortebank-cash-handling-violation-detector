@@ -1,0 +1,14 @@
+IBM Plex Sans / Google Fonts / SIL Open Font License 1.1
+https://fonts.google.com/specimen/IBM+Plex+Sans
+https://raw.githubusercontent.com/google/fonts/main/ofl/ibmplexsans/OFL.txt
+Latin variable WOFF2:
+https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2
+
+Space Grotesk / Google Fonts / SIL Open Font License 1.1
+https://fonts.google.com/specimen/Space+Grotesk
+https://raw.githubusercontent.com/google/fonts/refs/heads/main/ofl/spacegrotesk/OFL.txt
+Latin variable WOFF2:
+https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2
+
+Both font binaries are bundled locally; runtime makes no font/CDN requests.
+Cyrillic model descriptions use the local Arial/sans-serif fallback.

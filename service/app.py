@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 from fastapi import FastAPI,HTTPException,Request
 from fastapi.responses import HTMLResponse,JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.datastructures import UploadFile
 from src.video_api import Result,UploadBodyLimit,MAX_RESULT_BYTES,_source_timing_context
 
@@ -133,13 +134,24 @@ def create_app(*,api_key=None,jobs_dir=None,analysis_runner=None,deadline_second
             except asyncio.CancelledError:pass
     app=FastAPI(lifespan=lifespan,docs_url=None,redoc_url=None,openapi_url=None)
     app.state.jobs=manager;app.add_middleware(UploadBodyLimit,maximum=max_upload_bytes+128*1024)
+    # Only presentation assets are public. Recordings/jobs and evaluation source
+    # artifacts remain outside both mounts; the snapshot contains aggregates only.
+    app.mount('/static',StaticFiles(directory=ROOT/'service/static'),name='frontend-static')
+    app.mount('/styles',StaticFiles(directory=ROOT/'styles'),name='frontend-styles')
     def authorize(request):
         if not key:raise HTTPException(503,'API key is not configured')
         if not hmac.compare_digest(request.headers.get('X-API-Key','').encode(),key.encode()):raise HTTPException(401,'A valid X-API-Key is required')
     @app.get('/health')
     async def health():return {'ok':manager.started,'queue':manager.queue.qsize()}
+    def frontend_page(filename):
+        return HTMLResponse((ROOT/'service/static'/filename).read_text(),headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"})
     @app.get('/',response_class=HTMLResponse)
-    async def ui():return HTMLResponse((ROOT/'service/static/index.html').read_text(),headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; frame-ancestors 'none'"})
+    @app.get('/review',response_class=HTMLResponse)
+    async def ui():return frontend_page('index.html')
+    @app.get('/results',response_class=HTMLResponse)
+    async def results_page():return frontend_page('index.html')
+    @app.get('/evaluation',response_class=HTMLResponse)
+    async def evaluation_page():return frontend_page('evaluation.html')
     async def upload(request,auth):
         if auth:authorize(request)
         r=manager.reserve();p=directory/r['job_id']/'source.mov'

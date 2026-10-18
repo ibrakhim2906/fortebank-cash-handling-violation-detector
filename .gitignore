@@ -6,6 +6,8 @@ reports/**/*.png
 reports/**/*.mp4
 reports/**/*.mov
 tools/local-action-model/
+tools/local-video-decoder/bin/
+tools/local-video-decoder/archive/
 .venv/
 .pytest_cache/
 __pycache__/

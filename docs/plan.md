@@ -1,8 +1,37 @@
 # One execution plan: evidence-backed cash-operation video recognition
 
+## Current recovery execution, 18 October 2026
+
+The human asks to continue toward a 90–100-point solution. This continues the already approved recognition/release work below, within the existing one-Pod/$15 cap. A jury grade is a target, not a measured result or a guarantee. Preserve the frozen evaluators and select candidates on correctly typed localized events, misses, false alarms, failed jobs and actual latency; the existing proxy is not sufficient because its classification term is conditional on localization.
+
+Verified starting evidence: the selected public API completed all 40 supplied recordings with 27 correct verdicts, TP13/FN8/FP5/TN14, 6/22 annotated events within two seconds, and 6 correct types among those six matches. It produced 19 events, 13 unmatched under the frozen matching rule. Unmatched does not by itself establish a false allegation because annotation completeness is limited. DEV30 has 23 correct verdicts, TP12/FN4/FP3/TN11 and 5/16 correctly typed localized events. These supplied recordings are development/regression evidence, not an independent test.
+
+The source audit identifies seven DEV anchors without a matching reported type and four with that type at another, earlier time. All 16 anchors have an overview sample within two seconds, so sample-time quantization alone is not the explanation. The existing omission coverage condition excludes all supplied clips; retain its protection against treating unseen actions as absent. Broad searches after a wrong positive are also limited by the current empty-observation rescue condition.
+
+Execution order:
+
+1. Collect the already running storage-context comparison, followed by isolated single/grouped parity and the grouped-recognition comparison. Do not launch parallel inference on the single-sequence server. The completed refinement and source-resolution trials are rejected; repeating them unchanged is not the next step.
+2. Complete the already queued public native-video controls and verify actual chronology, static negatives, runtime, decoded pixels and HTTP resizing. Build a gate from the saved responses and an explicit chronology review. A prepared template is never a passed gate. Keep automatic baseline rollback and API recovery.
+3. If those controls pass, run the prepared isolated native DEV30 comparison with the same selected baseline settings and all requested recordings in the denominator. Report its supported-type ceiling: the initial native path alone cannot cover every annotated type. It must beat the current typed-event coverage without sacrificing positive recall or increasing false alarms before integration is considered.
+4. Use the completed comparisons to choose one next recognition change: coverage-driven discovery of unexamined action families, or source-ordered state transitions for an established physical event. The prepared binary-support probe can test a bounded localization mechanism after the model queue is idle. A support peak is not an onset; no uniform timing shift, source-specific shortcut or inferred absence is accepted.
+5. Address omissions only through bounded transaction phases with actual dense source-time coverage, visible prerequisites and explicit alternatives. Preserve the existing detail checks for tiny keys/computer state. If these facts cannot be observed, report the capability gap instead of forcing a positive to match a label.
+6. Qualify the retained whole configuration through the real API, original evidence frames, source-applicability review, runtime/license evidence and declared robustness tests. Reuse prior evidence only when its exact source/model/configuration identity still matches. A new independent authorized recording set is needed for an independent generalization claim.
+
+Per-experiment promotion requires all 30 requested DEV groups, honest primary-model failures retained, a gain in correctly typed localized coverage over 5/16, recall at least 12/16 and no more than three false-alarm videos. A false-alarm-only improvement may be retained separately but must not be called a localization gain. The stronger release ambition remains zero positive misses, at most one false alarm, at least 90% of annotated events localized within two seconds, type correctness at least 85% with its denominator shown, and actual full-job latency below 200 seconds on repeated slow cases. These are engineering targets, not the organizer's undisclosed scoring formula.
+
+No new dependency, model family, rental, raw-data edit or frozen-evaluator edit is introduced by this continuation. Keep the selected serving configuration until a complete challenger is measured and qualified. Record failed experiments and unresolved capability limits plainly.
+
 17 October 2026. This reassessment starts from the official case, original videos/Excel, human-reviewed notes and rubric. The human requests a beginning-to-end plan for a 90–95 ambition. The existing MISSION authorization, 06:30 Asia/Qyzylorda deadline on 18 October, one A40 and $15 total cap remain. This replaces earlier operational assumptions; the prior plan is preserved privately in data/processed/mission-v6-bootstrap/plan-before-recognition-reset.md. No claim of a predicted jury score.
 
 ## 1. Deliver the actual case contract
+
+### External action data amendment,18October05:24
+
+The human explicitly authorizes internet/Kaggle/HuggingFace dataset discovery and use to improve recognition. Preserve the existing one-Pod/$15 cash cap; no new dependencies are implicitly approved. Acquire relevant original videos with exact content licenses, source URLs, timestamps and hashes into isolated `data/processed/` external-resource folders. Do not alter case raw files or use annotated visualization overlays as training pixels.
+
+Official CAP detection data is now acquired and publisher-checksummed:18 original videos,36 publisher annotation intervals,13 relevant primitive labels,16 actor groups. It covers cabinet opening/closure, drinking/eating, removing outerwear and some door/laptop actions. This small subset alone cannot qualify a reliable13-class trained model. MEVA clean footage with object-transfer/door activity annotations is being acquired separately; label-burned exemplars are references only. Kaggle mirrors do not override original data licenses.
+
+Use these resources first for a bounded blind primitive diagnostic and targeted reference/adaptation experiment, retaining source/actor groups. Evaluate the resulting bank recognizer on the frozen30DEV protocol and actual API before promotion. Public action labels are not bank-violation labels: role, end-of-access/departure, designated storage and operation context remain explicit predicates. Do not train a foundation model on a large unrelated corpus or claim download equals improvement. No additional model is selected by this amendment.
 
 New MOV upload -> automatic analysis -> binary video verdict -> multiple events where supported. Each event has a type, actual source time, 1–3 original JPEG evidence frames, literal observable explanation and accurately scoped public source. Keep the keyed asynchronous POST /api/v1/analyze and GET /api/v1/jobs/{job_id} schema exactly. The official deadline is 300 seconds; target 200 seconds to leave operational margin. Run weights and inference inside the existing team-managed A40 service, without hosted AI calls; demonstrate processing without internet.
 
@@ -60,3 +89,15 @@ Checkpoint after the next qualified frozen candidate: reserve aggregates, declar
 6. By06:30 write reports/mission_report.md, tag mission-best, deploy the best measured configuration with CPU fallback, then continue V7. If targets are missed, report misses rather than claim90–95. Git publishing is currently blocked by no configured remote; do not push elsewhere.
 
 Existing upload/API/deployment/evidence/evaluation infrastructure is reusable. Prior failed recognizers remain experiment history, not inference dependencies. No raw data or frozen evaluator edits, no extra Pod, no cloudAI, no new spend/dependencies, no undocumented decision reversal. Continue under the existing MISSION approval; do not request the same authorization again.
+
+
+### Final controlled combination, 18 October 05:48 local
+
+Use evidence from rejected broad experiments selectively. First test the same literal storage ledger only as a counterexample veto on safe-open proposals: preserve all other event types and preserve original storage proposals whenever auxiliary inspection is unresolved. Next independently add at most two motion-selected short windows for visible personal-item placement, food/drink and predicate-qualified object transfer. No missing-step inference is added. If time remains, test the existing global-plus-dense onset refinement separately, preserving verdicts when timing is uncertain. All comparisons use the same frozen 30 DEV recordings and report primary-qualified metrics; no partial result earns promotion. Freeze the strongest measured configuration before the final public API run, retain CPU-off behavior, and report any unmet targets at the 06:30 boundary.
+
+
+## Audit-driven next comparisons,18October06:28local
+
+The human supplies an independent source-only audit. Its central diagnosis is confirmed: the16-image global observer imposes omission-coverage and coarse-time ceilings. Binary accuracy masks poor typed/source-time coverage. Current omissionguard requires entirephase densecoverage; it must not simply be removed. Existing tiledmode uses8images/12secondwindow and explicitly allow_omissions=False, so togglingtiled cannot fix omissions. Existing source flag raises request max_pixels to524288 and retains up to1024edgeJPEGs, so32Bsource is a legitimate unmeasured ablation. The earlier64global-image result regresses20/30→19/30 and does not establish that arbitrarydenserinput is sufficient.
+
+After currentselected40+2APIcheckpoint terminates, prioritize existing config-only proposal_refine withstandardresolution/storage_veto; then source-resolution/proposal/storage_veto, eachsame30DEV and resident32B/16k/60s. No API/modelrestart orsourcechange is needed for either. Rank by typedlocalizedeventcoverage/hit2s and confusioncounts, keeprecall/falsealarmdenominators and realtiming; cachedlatencycannotqualifyserving. Combineonlyretainedsingle-factorwins, then proceed already-stagednativecontrols/full30experiment. Allnativeinitialomissions/tinydetail exclusions and typedcoverageceilingremain explicit; actualdenseboundedtransaction evidence is required for lateromission changes. Publicmain/mission-best remains currentbest23/30, notclaimed90quality.

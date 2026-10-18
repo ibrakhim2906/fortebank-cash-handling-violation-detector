@@ -1,0 +1,383 @@
+{
+  "_note": "Seed for service/rules.json. Types from docs/annotations.md. Quotes from real acts (docs/case/legal.md) — verify on adilet.zan.kz before the deadline. 'logic' follows docs/case/rules_engine.md; thresholds are tuned in phase V5. 'enabled': false = keep silent until the rule passes eval without false alarms on clean videos.",
+  "sources": {
+    "NBRK_231": {
+      "act": "Постановление Правления Национального Банка Республики Казахстан от 29 ноября 2019 года № 231",
+      "short": "Правила осуществления кассовых операций и операций по инкассации (НБРК № 231)",
+      "url": "https://adilet.zan.kz/rus/docs/V1900019680"
+    },
+    "NBRK_14": {
+      "act": "Постановление Правления Национального Банка Республики Казахстан от 24 февраля 2020 года № 14 (рег. № 20075)",
+      "short": "Правила организации охраны и устройства помещений банков (НБРК № 14)",
+      "url": "https://adilet.zan.kz/rus/docs/V2000020075"
+    }
+  },
+  "types": {
+    "cash_left_out": {
+      "name": "Наличные деньги оставлены вне сейфа (хранилища)",
+      "visible": "на столе кассира лежат наличные деньги/сумка с ценностями вне активной операции или при уходе кассира",
+      "enabled": true,
+      "logic": {
+        "trigger": "cashier_leaving",
+        "require_any": [
+          "cash_on_desk",
+          "bag_on_desk"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 15,
+        "alt": {
+          "trigger": "cash_on_desk",
+          "require_none": [
+            "client_present",
+            "counter_active"
+          ],
+          "min_duration_sec": 4.0
+        }
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 20",
+          "quote": "Все ранее принятые наличные деньги хранятся в специальных устройствах, предназначенных для хранения наличных денег (металлический шкаф, сейф, тележка, ящики стола, тумба)."
+        },
+        {
+          "source": "NBRK_231",
+          "point": "п. 22",
+          "quote": "Кассовому работнику не допускается покидать рабочее место до окончания обслуживания клиента."
+        }
+      ],
+      "name_en": "Storage of previously accepted cash outside designated lockable storage units"
+    },
+    "door_left_open": {
+      "name": "Дверь кассы оставлена открытой (незапертой)",
+      "visible": "после прохода человека / ухода кассира дверь кассового помещения остаётся открытой",
+      "enabled": true,
+      "logic": {
+        "trigger": "door_open",
+        "min_duration_sec": 3.0,
+        "require_none": [
+          "person_in_doorway"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          3.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [
+        {
+          "source": "NBRK_14",
+          "point": "п. 16, пп. 1",
+          "quote": "каждая касса имеет отдельный вход с закрывающейся на замок дверью;",
+          "edition_check": "п. 16 НБРК №14 has a temporary edition while suspended until 01.01.2027 — verify on adilet and cite '(в редакции, действующей в период приостановления до 01.01.2027)' (legal.md)"
+        }
+      ],
+      "name_en": "Cash room door left open / unlocked"
+    },
+    "unauthorized_access": {
+      "name": "Доступ постороннего лица в кассовое помещение / к рабочему месту кассира",
+      "visible": "в кассовом помещении находится посторонний (не кассир и не обслуживаемый клиент), либо посторонний на стороне кассира / у кассового оборудования",
+      "enabled": true,
+      "logic": {
+        "trigger": "outsider_present",
+        "min_duration_sec": 1.5,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [
+        {
+          "source": "NBRK_14",
+          "point": "п. 16, пп. 1",
+          "quote": "каждая касса имеет отдельный вход с закрывающейся на замок дверью;",
+          "edition_check": "п. 16 НБРК №14 has a temporary edition while suspended until 01.01.2027 — verify on adilet and cite '(в редакции, действующей в период приостановления до 01.01.2027)' (legal.md)"
+        },
+        {
+          "source": "NBRK_14",
+          "point": "п. 8",
+          "quote": "Кассовый узел подлежит изолированию от других производственных, подсобных, подвальных и служебных помещений"
+        }
+      ],
+      "name_en": "Unauthorized access to the cash handling room / cashier's workstation"
+    },
+    "hand_to_hand_transfer": {
+      "name": "Передача ценностей из рук в руки, минуя передаточное устройство",
+      "visible": "кассир и другое лицо передают наличные/сумку/документы из рук в руки над столом",
+      "enabled": true,
+      "logic": {
+        "trigger": "hand_to_hand",
+        "min_duration_sec": 0.5,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.0
+        ],
+        "cooldown_sec": 15
+      },
+      "rules": [
+        {
+          "source": "NBRK_14",
+          "point": "п. 16, пп. 4",
+          "quote": "передняя часть кассы оборудуется специальными транспортирующими устройствами для передачи наличных денег и ценностей.",
+          "edition_check": "п. 16 НБРК №14 has a temporary edition while suspended until 01.01.2027 — verify on adilet and cite '(в редакции, действующей в период приостановления до 01.01.2027)' (legal.md)"
+        }
+      ],
+      "name_en": "Hand-to-hand transfer of cash/valuables bypassing the transfer tray"
+    },
+    "safe_left_open": {
+      "name": "Сейф оставлен открытым",
+      "visible": "дверца сейфа открыта, пока кассир работает за столом или отходит от сейфа",
+      "enabled": true,
+      "logic": {
+        "trigger": "safe_open",
+        "require_none": [
+          "cashier_at_safe"
+        ],
+        "min_duration_sec": 3.0,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 20",
+          "quote": "Все ранее принятые наличные деньги хранятся в специальных устройствах, предназначенных для хранения наличных денег (металлический шкаф, сейф, тележка, ящики стола, тумба)."
+        }
+      ],
+      "name_en": "Safe left open"
+    },
+    "keys_left_in_safe": {
+      "name": "Ключи оставлены в замке сейфа",
+      "visible": "в замке сейфа виден ключ, когда кассир отходит или покидает помещение",
+      "enabled": false,
+      "logic": {
+        "trigger": "cashier_leaving",
+        "require_all": [
+          "key_in_safe_lock"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 20
+      },
+      "interpretation": "Требование хранить наличные в устройствах, «закрывающихся на ключ» (п. 20), предполагает, что ключ не остаётся в замке без присмотра — это толкование.",
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 20",
+          "quote": "Все ранее принятые наличные деньги хранятся в специальных устройствах, предназначенных для хранения наличных денег (металлический шкаф, сейф, тележка, ящики стола, тумба)."
+        }
+      ],
+      "name_en": "Keys left in the safe lock"
+    },
+    "workstation_unlocked": {
+      "name": "Рабочий компьютер не заблокирован при уходе кассира",
+      "visible": "кассир покидает рабочее место, ноутбук открыт и экран активен",
+      "enabled": true,
+      "logic": {
+        "trigger": "cashier_leaving",
+        "require_all": [
+          "laptop_screen_on"
+        ],
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [],
+      "_todo": "Legal teammate: find a verified RK norm (НБРК requirements on information security of banks). Until then show the finding with the note «требование информационной безопасности (внутренний регламент банка)» and no invented article.",
+      "name_en": "Workstation computer left unlocked when leaving"
+    },
+    "counting_without_client": {
+      "name": "Пересчёт принятых наличных в отсутствие клиента",
+      "visible": "клиент ушёл, после чего кассир пересчитывает / обрабатывает принятые наличные",
+      "enabled": false,
+      "logic": {
+        "trigger": "client_left",
+        "require_after": {
+          "fact": "counter_active",
+          "equals": true,
+          "min_sec": 1.0,
+          "within_sec": 15.0
+        },
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          3.0
+        ],
+        "cooldown_sec": 20
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 20",
+          "quote": "Наличные деньги принимаются и пересчитываются кассовым работником в присутствии клиента."
+        }
+      ],
+      "name_en": "Counting incoming cash in the customer's absence"
+    },
+    "no_count_check": {
+      "name": "Приём наличных без полистного пересчёта и проверки подлинности",
+      "visible": "кассир принимает наличные и убирает их, не пропуская через счётчик/детектор банкнот",
+      "enabled": false,
+      "logic": {
+        "trigger": "cash_received",
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 20,
+        "absent_after": {
+          "fact": "counter_active",
+          "within_sec": 15.0
+        }
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 19, пп. 2",
+          "quote": "принимает банкноты с полистным пересчетом, монеты с пересчетом по кружкам с проверкой на подлинность"
+        }
+      ],
+      "name_en": "Acceptance of cash without counting each banknote and verifying authenticity"
+    },
+    "no_id_check": {
+      "name": "Приём наличных без идентификации клиента по документу",
+      "visible": "кассир принимает наличные, при этом документ, удостоверяющий личность, клиентом не предъявлялся",
+      "enabled": false,
+      "logic": {
+        "trigger": "cash_received",
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 30,
+        "absent_before": {
+          "fact": "id_document_shown",
+          "within_sec": 60.0
+        }
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 19, пп. 1",
+          "quote": "проводит визуальную идентификацию клиента, вносящего наличные деньги, с документом, удостоверяющим его личность"
+        }
+      ],
+      "name_en": "Acceptance of cash without verifying the client's identity document"
+    },
+    "no_receipt": {
+      "name": "Выдача наличных (сдачи) без документа, подтверждающего операцию",
+      "visible": "кассир передаёт клиенту наличные, документ (квитанция/чек) клиенту не выдаётся",
+      "enabled": false,
+      "logic": {
+        "trigger": "cash_given",
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          2.0
+        ],
+        "cooldown_sec": 30,
+        "absent_after": {
+          "fact": "document_given",
+          "within_sec": 10.0
+        }
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 31, пп. 6",
+          "quote": "выдает клиенту документ, подтверждающий проведение кассовой операции по выдаче наличных денег"
+        }
+      ],
+      "name_en": "Cash issued without a document confirming the operation"
+    },
+    "personal_items": {
+      "name": "Личные вещи в кассовой зоне",
+      "visible": "на кассовом столе размещены личные вещи кассира (сумка, верхняя одежда)",
+      "enabled": true,
+      "logic": {
+        "trigger": "bag_on_desk",
+        "require_none": [
+          "client_present"
+        ],
+        "min_duration_sec": 1.5,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 30
+      },
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 12",
+          "quote": "Хранение личных вещей, наличных денег и ценностей работников банка осуществляется вне кассового узла"
+        }
+      ],
+      "name_en": "Placement of personal belongings within the cash handling area"
+    },
+    "food_drink": {
+      "name": "Употребление напитков на рабочем месте при работе с наличными",
+      "visible": "кассир пьёт из чашки/бутылки на рабочем месте, где находятся наличные",
+      "enabled": true,
+      "logic": {
+        "trigger": "drink_at_face_or_desk",
+        "min_duration_sec": 1.0,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.0
+        ],
+        "cooldown_sec": 30
+      },
+      "interpretation": "Прямого запрета напитков в актах НБРК не найдено; напиток рассматривается как личный предмет в кассовом узле по смыслу п. 12.",
+      "rules": [
+        {
+          "source": "NBRK_231",
+          "point": "п. 12",
+          "quote": "Хранение личных вещей, наличных денег и ценностей работников банка осуществляется вне кассового узла"
+        }
+      ],
+      "name_en": "Consuming beverages at the workstation while handling cash"
+    },
+    "personal_activity": {
+      "name": "Посторонние занятия на рабочем месте (чтение)",
+      "visible": "кассир читает книгу/журнал на рабочем месте",
+      "enabled": true,
+      "logic": {
+        "trigger": "book_in_hands",
+        "min_duration_sec": 2.0,
+        "timecode": "trigger",
+        "evidence": [
+          0,
+          1.5
+        ],
+        "cooldown_sec": 30
+      },
+      "rules": [],
+      "_todo": "No public RK norm found. Show only as «нарушение трудовой дисциплины (внутренний регламент)» without an article, or rely on door_left_open for Х-24.",
+      "name_en": "Personal activities (reading) at the workstation"
+    }
+  },
+  "_type_field": "API 'type' = name + ' / ' + name_en (bilingual: matches exact, keyword or semantic comparison of types)"
+}

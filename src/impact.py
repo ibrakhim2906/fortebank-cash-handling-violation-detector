@@ -3,7 +3,6 @@
 Usage: uv run python -m src.impact [--oof blend|lgbm|cat]
 """
 import argparse
-import json
 
 import matplotlib
 
@@ -12,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src import config as C
+from src import artifacts as A
 
 
 def value_curve(y, p, thresholds):
@@ -28,13 +28,17 @@ def value_curve(y, p, thresholds):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--oof", default=None, help="which oof file: blend, lgbm, cat (default: best available)")
+    ap.add_argument("--oof", default="lgbm", choices=["lgbm"])
+    ap.add_argument("--run-dir")
     args = ap.parse_args()
+    A.configure_run(args.run_dir)
     if C.TASK != "binary":
         print("impact.py covers binary tasks; for regression report error in ₸ instead.")
         return
-    name = args.oof or next(n for n in ("blend", "lgbm", "cat", "linear")
-                           if (C.REPORTS / f"oof_{n}.npy").exists())
+    manifest = A.load_manifest()
+    if manifest["state"] != "developed":
+        raise ValueError("Policy already frozen; use a fresh run for another policy")
+    name = manifest["selected_model"]
     p = np.load(C.REPORTS / f"oof_{name}.npy")
     y = np.load(C.REPORTS / "oof_target.npy")
     mask = ~np.isnan(p)
@@ -60,7 +64,9 @@ def main():
     headline = (f"At threshold {best['threshold']:.2f} the model flags {best['flag_rate']:.1%} of clients and "
                 f"catches {best['recall']:.1%} of positives — about {uplift10k / 1e6:,.1f} million ₸ per 10,000 "
                 f"clients MORE than the best policy without a model.")
-    md = ["# Business impact", "", f"Predictions: out-of-fold `{name}` ({len(y)} rows)", "",
+    md = ["# Business impact — development-selected scenario", "",
+          "Threshold selected on these development rows; this is not untouched-holdout value.", "",
+          f"Predictions: out-of-fold `{name}` ({len(y)} rows); run `{manifest['run_id']}`", "",
           f"Assumptions: value of a caught positive = {C.VALUE_TP:,} ₸, cost of a false alarm = {C.COST_FP:,} ₸ "
           "(edit in src/config.py)", "", f"**{headline}**", "",
           f"- Value with model: {per10k / 1e6:,.1f} M ₸ per 10k clients",
@@ -72,7 +78,25 @@ def main():
     for r in rows[::10] + [best]:
         md.append(f"| {r['threshold']:.2f} | {r['flag_rate']:.1%} | {r['recall']:.1%} | {r['value'] / len(y) * 10_000:,.0f} |")
     (C.REPORTS / "impact.md").write_text("\n".join(md), encoding="utf-8")
-    (C.REPORTS / "impact.json").write_text(json.dumps({"threshold": best["threshold"], "oof": name}), encoding="utf-8")
+    policy = {"threshold": best["threshold"], "model": name, "run_id": manifest["run_id"],
+              "value_tp": C.VALUE_TP, "cost_fp": C.COST_FP, "selection": "development OOF only"}
+    A.write_json(C.REPORTS / "impact.json", policy)
+    manifest["policy"] = policy
+    manifest["state"] = "policy_frozen"
+    for filename in ("impact.json", "impact.md", "impact.png"):
+        A.record_artifact(manifest, C.REPORTS / filename)
+    sensitivity = []
+    selected_flag = p >= best["threshold"]
+    true_positives = int(np.sum(selected_flag & (y == 1)))
+    false_positives = int(np.sum(selected_flag & (y == 0)))
+    for multiplier in (0.5, 1.0, 1.5):
+        sensitivity.append({"false_alarm_cost_multiplier": multiplier, "threshold": best["threshold"],
+                            "value_per_10000": (true_positives * C.VALUE_TP - false_positives * C.COST_FP * multiplier)
+                            * 10000 / len(y)})
+    A.write_json(C.REPORTS / "sensitivity.json", sensitivity)
+    A.record_artifact(manifest, C.REPORTS / "sensitivity.json")
+    A.freeze_policy(manifest)
+    A.save_manifest(manifest)
     print("\n".join(md))
 
 

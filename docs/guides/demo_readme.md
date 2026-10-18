@@ -9,6 +9,8 @@ One clear flow, nothing else:
 
 Rules: it must start in under 10 seconds, never crash on the demo clients, and use pre-trained artifacts from `models/` (no training at startup). Pick 3 demo clients in advance (high risk, low risk, borderline) and rehearse with exactly those. Record a 1-minute backup video.
 
+Select a finalized run with `DATATHON_RUN_DIR=<path> uv run streamlit run app/app.py`; preserve any `DATATHON_THREADS` setting used for that run. The app loads its manifest-checked LightGBM artifact, selects low/high/nearest-threshold examples from that model, and displays the same policy and impact chart. The threshold slider explores a review scenario without modifying the frozen holdout policy. Source/input/config changes require a new run. Automated Streamlit checks do not substitute for a visible-browser check, human pitch rehearsal or backup video.
+
 ## README (judges and mentors read it)
 Sections, short:
 1. Problem in one sentence + the bank decision it supports

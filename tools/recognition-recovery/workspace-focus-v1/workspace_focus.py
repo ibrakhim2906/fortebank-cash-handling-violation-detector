@@ -1,0 +1,116 @@
+"""Additive grounded detail observations; abstention never creates an event."""
+import math,time
+from typing import Literal
+import cv2
+import numpy as np
+from pydantic import BaseModel,ConfigDict,Field,StrictBool,StrictInt
+from service.pipeline.desk import WorkRegion,work_box
+from service.pipeline.vlm import ask
+
+KINDS={'cash_left_out','safe_left_open','personal_items','food_drink','counting_without_client'}
+
+class DetailPhase(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    start_frame:StrictInt=Field(ge=0,le=15)
+    end_frame:StrictInt=Field(ge=0,le=15)
+    visible_action:str=Field(min_length=1,max_length=64)
+
+class DetailCandidate(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    before_fact:str=Field(min_length=1,max_length=80)
+    visible_fact:str=Field(min_length=1,max_length=140)
+    kind:Literal['cash_left_out','safe_left_open','personal_items','food_drink','counting_without_client']
+    predicate_met:StrictBool
+    support:Literal['clear','uncertain','not_visible']
+    counterexamples_excluded:StrictBool
+    before_frame:StrictInt=Field(ge=0,le=15)
+    onset_frame:StrictInt=Field(ge=0,le=15)
+    evidence_frame:StrictInt=Field(ge=0,le=15)
+    context_frame:StrictInt=Field(ge=0,le=15)
+
+class DetailSweep(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    visibility:Literal['clear','limited','insufficient']
+    worker_and_client_context:str=Field(min_length=1,max_length=100)
+    phases:list[DetailPhase]=Field(min_length=1,max_length=3)
+    observations:list[DetailCandidate]=Field(max_length=10)
+
+
+def crop_detail(frame,box):
+    image=cv2.imdecode(np.frombuffer(frame.get('inspection_image',frame['image']),np.uint8),cv2.IMREAD_COLOR)
+    if image is None:raise ValueError('Invalid inspection JPEG')
+    h,w=image.shape[:2];x0,y0,x1,y1=box
+    left=max(0,math.floor(x0*w/1000));right=min(w,math.ceil(x1*w/1000))
+    top=max(0,math.floor(y0*h/1000));bottom=min(h,math.ceil(y1*h/1000))
+    crop=image[top:bottom,left:right]
+    if min(crop.shape[:2])<16:raise ValueError('Insufficient grounded source detail')
+    ratio=math.sqrt(262144/(crop.shape[0]*crop.shape[1]))
+    width=max(32,math.floor(crop.shape[1]*ratio/32)*32);height=max(32,math.floor(crop.shape[0]*ratio/32)*32)
+    crop=cv2.resize(crop,(width,height),interpolation=cv2.INTER_CUBIC)
+    ok,jpeg=cv2.imencode('.jpg',crop,[cv2.IMWRITE_JPEG_QUALITY,90])
+    if not ok or jpeg.nbytes>1024**2:raise ValueError('Invalid bounded detail JPEG')
+    return dict(frame,image=jpeg.tobytes(),focus_view='detail')
+
+
+def focused_views(frames,box):
+    from service.pipeline.auditor import choose
+    details=[crop_detail(f,box) for f in choose(frames,13)]
+    originals=[dict(f,image=f.get('inspection_image',f['image']),focus_view='original') for f in choose(frames,3)]
+    samples=sorted(originals+details,key=lambda f:(f['timestamp_sec'],f['focus_view']!='original'))
+    if len(samples)>16:raise ValueError('Detail image count exceeds bound')
+    return samples,[i for i,f in enumerate(samples) if f['focus_view']=='original']
+
+
+def detail_rescan(frames,deadline,*,requester=None):
+    from service.pipeline.auditor import choose,predicate_catalogue
+    logs=[]
+    def abstain(code):
+        logs.append(dict(stage='focus_rescan_unresolved',error_code=code,negative_authority=False));return [],logs
+    if len(frames)<2 or deadline-time.monotonic()<45:return abstain('FocusBudget')
+    contexts=[dict(f,image=f.get('inspection_image',f['image'])) for f in choose(frames,3)]
+    question=('Locate one fixed original-image region containing the actual cash work surface, operating worker upper body/hands and directly adjacent storage/workstation. '
+              'Use physical work actions and equipment, not clothing/identity. Exclude blank floor/walls. '
+              'The same rectangle must apply to all three views even if people leave. Coordinates normalized0..1000. '
+              'located=false if the work region cannot be established, consistent_across_views=false if the camera/layout changes. No conduct judgment.')
+    try:
+        answer,meta=ask(contexts,question,WorkRegion,deadline,requester=requester,max_tokens=256,call_timeout=20)
+        logs.append(dict(stage='focus_grounding',**meta,answer=answer.model_dump()))
+        box=work_box(answer)
+        if box is None:return abstain('FocusRegionUnknown')
+        if deadline-time.monotonic()<30:return abstain('FocusDetailBudget')
+        selected,original_indices=focused_views(frames,box)
+        catalogue='\n'.join(line for line in predicate_catalogue().splitlines() if line.partition(':')[0] in KINDS)
+        prompt=('These chronological images come from ONE camera. Full original views are at indices '+str(original_indices)+'. '
+                'Every other image is a magnified crop of the same fixed work region at its actual source time. '
+                'First describe brief worker/client context and up to three physical phases in Russian. Then report only supported concerns. '
+                'Do not enumerate the catalogue or list normal, absent or uncertain candidates. observations must be empty when no positive predicate is met. '
+                'predicate_met=true requires the complete POSITIVE predicate; a clearly visible normal action or absent object means false. '
+                'Give a visible BEFORE state and problematic AFTER state. onset_frame is the first directly supported AFTER state, not first object appearance. '
+                'Use indices in THIS request. Person absence can only be established from a FULL original view, never from exclusion by a crop. '
+                'For cash_left_out/counting_without_client, context_frame must be a full original view at/after onset that demonstrates the relevant departure/client context. '
+                'Distinguish client departure from worker departure; exclude active counting, collection-bag handling, worn clothes and work documents. '
+                'No unidentified bag-as-cash, hand-near-face-as-drinking, identity/authorization or invisible procedure claims. '
+                'Omissions, tiny keys and authenticated screen status are outside this detail pass. '
+                'A crop cannot establish an offscreen state. Unknown prerequisites mean predicate_met=false. '+catalogue)
+        answer,meta=ask(selected,prompt,DetailSweep,deadline,requester=requester,max_tokens=768,call_timeout=90)
+        logs.append(dict(stage='focus_detail_sweep',grounded_box_1000=list(box),original_frame_indices=original_indices,**meta,answer=answer.model_dump()))
+        if any(p.start_frame>p.end_frame or p.end_frame>=len(selected) for p in answer.phases):return abstain('FocusPhaseIndices')
+    except (OSError,TimeoutError,ValueError,KeyError) as exc:return abstain(type(exc).__name__)
+    if answer.visibility=='insufficient':return abstain('FocusVisibilityUnknown')
+    events=[]
+    for c in answer.observations:
+        if not c.predicate_met or c.support!='clear' or not c.counterexamples_excluded:continue
+        indices=[c.before_frame,c.onset_frame,c.evidence_frame,c.context_frame]
+        if max(indices)>=len(selected):continue
+        if not selected[c.before_frame]['timestamp_sec']<selected[c.onset_frame]['timestamp_sec']<=selected[c.evidence_frame]['timestamp_sec']:continue
+        if c.kind in {'cash_left_out','counting_without_client'} and (c.context_frame not in original_indices or selected[c.context_frame]['timestamp_sec']<selected[c.onset_frame]['timestamp_sec']):continue
+        onset=selected[c.onset_frame]['timestamp_sec'];evidence=selected[c.evidence_frame]['timestamp_sec']
+        if c.kind=='safe_left_open':
+            from service.pipeline.state_ledger import storage_counterexample
+            veto,details=storage_counterexample(c,frames,onset,evidence,deadline,requester=requester)
+            logs.extend(details)
+            if veto:continue
+        events.append(dict(type_id=c.kind,timecode_sec=onset,evidence_sec=evidence,visible_fact=c.visible_fact,
+                           confidence=.8,origin='grounded_detail_positive',complete_phase_visible=False))
+    logs.append(dict(stage='focus_detail_complete',accepted_events=len(events),negative_authority=False))
+    return events,logs

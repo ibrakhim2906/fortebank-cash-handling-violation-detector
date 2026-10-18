@@ -1,0 +1,4 @@
+Historical isolated candidate validation, 2026-10-18:
+Focused tests: 9 passed in 1.03s.
+Full copied-source suite: 1200 passed, 2 skipped, 12 warnings in 58.15s.
+No bank GPU comparison or deployment performed for this candidate.

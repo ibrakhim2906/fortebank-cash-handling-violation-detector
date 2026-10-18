@@ -1,0 +1,9 @@
+{
+  "url": "https://raw.githubusercontent.com/tensorflow/models/f8af2291cced43fc9f1d9b41ddbf772ae7b0d7d2/official/projects/movinet/files/kinetics_600_labels.txt",
+  "source_commit": "f8af2291cced43fc9f1d9b41ddbf772ae7b0d7d2",
+  "sha256": "8dfca4202520ea8291ce0242ef33b006d0a0772b409663c090a2876bc1978dcf",
+  "bytes": 9209,
+  "classes": 600,
+  "retrieved_utc": "2026-10-17T11:11:16.203061+00:00",
+  "tutorial_url": "https://www.tensorflow.org/hub/tutorials/movinet"
+}

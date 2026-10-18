@@ -2,6 +2,8 @@
 
 Command: `uv run python -m src.sanity` → writes `reports/sanity.md`.
 
+Use the same `--run-dir <path>` as development. Reserved holdout rows are removed before target scans and shuffled-target fitting. Failures write the report and return a nonzero exit status; stop before threshold selection/finalization. The JSON summary records actual shuffled/dummy/adversarial scores. This is a diagnostic, not a guarantee that every possible leak has been excluded.
+
 | Check | What it catches | Pass condition |
 |---|---|---|
 | Duplicate IDs | Same entity counted twice, leaking across folds | 0 duplicates, or GROUP_COL is set |

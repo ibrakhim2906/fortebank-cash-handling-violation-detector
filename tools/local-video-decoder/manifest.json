@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "component": "FFmpeg/ffprobe Linux x86_64 LGPL static",
+  "release": "autobuild-2026-10-16-13-04",
+  "release_id": 414971902,
+  "asset_id": 647361913,
+  "builder_commit": "63ac3265b0789ea16c7b1f8351cd2ad195a28722",
+  "ffmpeg_commit": "46d899d7a02bc63237472cc4897258d5ddf274ac",
+  "archive_sha256": "70df7305a38b8dc518e35e44d1f165edc74033082ae53b5d977acfa2849fe8fb",
+  "license": "LGPL-3.0-or-later",
+  "assets": [
+    {
+      "path": "tools/local-video-decoder/archive/ffmpeg-n8.1.3-18-g46d899d7a0-linux64-lgpl-8.1.tar.xz",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-16-13-04/ffmpeg-n8.1.3-18-g46d899d7a0-linux64-lgpl-8.1.tar.xz",
+      "size": 137124016,
+      "sha256": "70df7305a38b8dc518e35e44d1f165edc74033082ae53b5d977acfa2849fe8fb"
+    },
+    {
+      "path": "tools/local-video-decoder/licenses/COPYING.GPLv3",
+      "url": "https://raw.githubusercontent.com/FFmpeg/FFmpeg/46d899d7a02bc63237472cc4897258d5ddf274ac/COPYING.GPLv3",
+      "size": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    }
+  ],
+  "runtime_network_required": false,
+  "executes_binaries_during_install": false,
+  "installed_files": {
+    "tools/local-video-decoder/bin/ffmpeg": {
+      "size": 142166568,
+      "sha256": "9087520002e707613b9c20fd3e251474bf85eaa16156ba4df42652231f7b1046"
+    },
+    "tools/local-video-decoder/bin/ffprobe": {
+      "size": 141933032,
+      "sha256": "db87fc6e0f78cf83b7aacb2d21f7658216f0f861834f3612c9931728256e026e"
+    },
+    "tools/local-video-decoder/licenses/COPYING.LGPLv3": {
+      "size": 7651,
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    }
+  },
+  "installed_at_utc": "2026-10-17T10:01:49.090475+00:00"
+}

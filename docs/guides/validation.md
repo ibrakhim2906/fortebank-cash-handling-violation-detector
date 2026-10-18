@@ -32,6 +32,14 @@ Missing dates, negative/non-integer gaps, insufficient unique dates for automati
 
 Choose any nonzero label gap from the actual outcome horizon and reporting availability. A fixed 183-day illustration is not identical to six calendar months after issue, and no such assumption is enabled by default. The mock-specific configuration and read-only fold tables live only in `tests/test_eval.py`; tests never fit models. Raw mock data is optional and its two integration tests skip when the ignored CSV is absent. Run `uv run pytest` to see the printed mock fold tables when the CSV is present.
 
+## Explicit finalization
+
+`uv run python -m src.train` defaults to development-only. Supply `--run-dir <path>` (or set `DATATHON_RUN_DIR`) to isolate artifacts; an optional `config.json` in that directory overrides case settings at runtime without editing generic defaults. A run directory is immutable after development: changed source, inputs, settings or artifacts require a fresh run.
+
+For binary tasks, run `uv run python -m src.impact --run-dir <path> --oof lgbm` to freeze the threshold from development OOF. Then `uv run python -m src.train --run-dir <path> --stage finalize` fits only eligible earlier training rows, scores the configured holdout with fixed iterations/policy, records `holdout.json`, and only then refits on all training labels for the retrospective submission. Repeated finalization is rejected. Without `HOLDOUT_WINDOW`, the report explicitly states that no holdout was evaluated. Regression has no binary threshold stage.
+
+Sanity scans exclude reserved holdout labels. Reports distinguish development policy selection from untouched-holdout evaluation. No claim of expected loss, calibrated probabilities or causal savings follows merely from ROC-AUC or a synthetic TP/FP value scenario.
+
 ## Checks before freezing `eval.py`
 1. Metric in `score()` is exactly the official one (same definition, same averaging).
 2. Fold sizes and target rate per fold look reasonable (printed by `src.train`).

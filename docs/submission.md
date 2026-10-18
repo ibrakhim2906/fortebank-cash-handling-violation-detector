@@ -1,10 +1,18 @@
 # ForteBank video service — working submission draft
 
-Status: MISSION in progress. No qualified recognition score or final jury handoff yet.
+Status: measured recognition remains below release targets; checkpoint3 API/runtime qualification is complete. Final jury handoff remains open.
 
 ## Current licensing and submission audit — 18 October 2026, 04:38 UTC+05:00
 
-This section records the current evidence and supersedes historical operational statements above or below when they disagree. It does not promote an experimental recognizer. The latest recorded run is the 64-image/32k-context, 90-second-call development comparison on the same resident 32B model; its complete quality result is pending. The previous complete DEV and regression figures elsewhere in this draft remain the latest completed measurements.
+The timestamp above identifies the preserved licence inventory audit. The operational update below supersedes earlier checkpoint1, pending 64-image comparison and failed offline-attempt statements retained as history. No recognition promotion follows from documentation or inventory completion.
+
+### Current operational evidence — 18 October 2026
+
+- Selected checkpoint3 recipe: `d4c64e727fab0890048f332a03e90e1fae61343e3ddb39afce1bbad864140bfc`, the existing A40/32B AWQ service with 16 images, 16384 context, 60-second model-call ceiling, proposal policy, selective storage veto and frame-only processing. See `deploy/mission-best.env` and `data/processed/mission-checkpoint-3-storage-qualified-v1/provenance.json`.
+- Checkpoint3 completed **40/40 clean uploads through the primary recipe, zero failed jobs, and two distinct qualified slowest-source repeats**: 42 unique actual job IDs. Clean worst time was **72.984294733 seconds**; repeats were **64.933887418** and **65.902824726 seconds**. Recognition on all 40 previously reviewed recordings was **27/40 correct verdicts, 13/21 positives detected, five false alarms and 6/22 events within ±2 seconds**. This is not independent-test performance. Exact aggregates and timing: `data/processed/mission-checkpoint-3-storage-qualified-v1/{all40-aggregate,actual-api-runtime}.json`.
+- Actual selected-GPU network-denied processing **passed**, with engine `mission-v1`, `audit_complete=true`, one primary request and **27.481672797 seconds**, on the same selected recipe. Evidence: `data/processed/mission-selected-gpu-offline-proof.json`. This establishes the tested processing path, not recognition quality or licence compliance.
+- Code publication is recorded at [the team repository](https://github.com/ibrakhim2906/fortebank-cash-handling-violation-detector). Local `origin` is configured; the separate publication checkout records `main` and `origin/main` at `c9619f7917d20895958a370a0fcab82c1cf20684`, with an update-by-push reflog entry at 06:44:43 Asia/Qyzylorda. Its `mission-best` tag peels to selected-source commit `a4cf69e276391ca21e170134eccbc130567f60c7`. These are saved publication/local Git facts; this correction made no fresh remote request.
+- **Licence-table and notice presence are complete; strict policy qualification remains false.** The 07:24 local recheck verifies all 238 distribution records, 316 notices and 319 archive file members with zero integrity failures. The separate Apache/MIT/BSD-only policy conflict and incomplete system/redistribution qualification remain. Checkpoint3 retains Product 10, Tech 0 and Robustness 0; no proxy or gate was changed. See `data/processed/recognition-recovery-20261018/licenses/{audit.md,verification.json}`. The full 280-transform robustness qualification remains outstanding.
 
 ### Scope, evidence and compatibility status
 
@@ -264,14 +272,16 @@ These files were retrieved as license documents only, without installing or upda
 - `service/rules.json` has 14 types, all deterministic `enabled` flags false and all `rules` lists empty. Eleven types carry a qualified `context_source`; keys-left-in-safe, workstation-unlocked and personal-activity carry none. Public-source context is not an activated, verified automatic legal finding. Under the requested proxy, empty `rules: []` earns only the explicit half-share; no 15/15 legal claim is supported.
 - `docs/action_rule_candidates.md` and `docs/case/legal.md` remain the source authority. Cash storage under NBK 231 §20 includes designated lockable storage, not only safes. Identity checks permit relevant electronic documents; intact packaged withdrawals have exceptions. Premises/device requirements in NBK 14 §16 do not establish every proposed behavior ban. The quoted temporary §16 edition must be named. No verified categorical key-removal rule, standalone food ban, private-reading ban or immediate short-absence workstation-lock rule is invented.
 - Every event needs a literal observable explanation, correct source/time JPEGs, act/section where verified, and material source/applicability limitations. Evidence does not prove an item is cash, a person unauthorized, a session unlocked, or a missing step absent while offscreen. These remain recognition/applicability risks, not wording problems alone.
-- At audit time, no successful actual GPU kernel-network-blocked inference proof has been supplied to this audit. The CPU proof and software tests do not substitute for it. Preserve the exact model/service recipe in any subsequent proof. **The inventory/license table and package-notice presence coverage are complete; strict Apache/MIT/BSD-only compatibility remains false.** Table completion does not resolve that policy conflict, prove network-blocked GPU processing, or alone qualify the Tech gate. Full redistribution/source obligations and system notices remain a separate incomplete audit.
-- Checkpoint1 is complete: 44 public jobs, zero failed jobs; 41/42 traced jobs primary, one transformed fallback. Worst observed 76.51247401 seconds; longest repeats 47.210525177 / 44.749218023 seconds. Repeats lack primary metadata. Only 28 transformed DEV examples were checked, and full 40 clean / 280 augmented qualification remains outstanding. These completed partial results supersede earlier “in progress” statements; they do not earn full-set Product/Robustness points.
-- Final handoff still needs the frozen best deployed recipe and tag, final measured report/per-type limitations, complete UI and keyed API instructions/example, private jury-key handoff, final actual API/robustness/offline evidence, and the funded judging uptime window. No Git remote is configured, so push evidence is missing. Full source/license redistribution verification and the literal license-policy conflict remain disclosed.
+- **Historical 04:38 audit status:** the successful selected-GPU proof had not yet been supplied. It is now preserved and passed as recorded above. **The inventory/license table and package-notice presence coverage are complete; strict Apache/MIT/BSD-only compatibility remains false.** Table completion does not resolve that policy conflict or alone qualify the Tech gate. Full redistribution/source obligations and system notices remain a separate incomplete audit.
+- **Historical checkpoint1:** 44 public jobs, zero failed jobs; 41/42 traced jobs primary, one transformed fallback. Worst observed 76.51247401 seconds; longest repeats 47.210525177 / 44.749218023 seconds lacked primary metadata. Only 28 transformed DEV examples were checked. Checkpoint3 above now qualifies all 40 clean uploads and two primary repeats; full 280-transform robustness remains outstanding.
+- Final handoff still needs the final measured report/per-type limitations, complete UI and keyed API instructions/example, private jury-key handoff, full robustness evidence, and the funded judging uptime window. Selected recipe/tag, recorded code publication, full clean API qualification and the tested GPU-offline path are evidenced above. Full source/license redistribution verification and the literal licence-policy conflict remain disclosed.
 
 <!-- END CURRENT LICENSING AUDIT -->
 
 
-Current development configuration (18 October local): pinned Qwen3-VL-32B-Instruct-AWQ on the existing A40, vLLM0.11.0/Transformers4.57.1, loopback8002, standard16-image sweep, frame-only preprocessing, proposal policy. The local64-image/32k-context candidate has passed software/coverage checks but is **not yet deployed or quality-qualified**. Default code remains16images. Source/runtime identities are preserved with each benchmark; the public checkpoint is frozen until completion.
+### Historical operational snapshot — superseded by checkpoint3 above
+
+Earlier development configuration (18 October local): pinned Qwen3-VL-32B-Instruct-AWQ on the existing A40, vLLM0.11.0/Transformers4.57.1, loopback8002, standard16-image sweep, frame-only preprocessing, proposal policy. At this snapshot, the local64-image/32k-context candidate had passed software/coverage checks but was **not yet deployed or quality-qualified**. Default code remained16images. The measurements and pending statements in this historical block describe that earlier state.
 
 Measured results, not a jury forecast:
 
@@ -284,13 +294,17 @@ The type fractions are conditional on localization: correct typed event coverage
 
 All14clean public checkpoint requests (10reserve+4DEV) completed through the primary model without failed jobs; worst51.1425seconds including upload/polling. This is a partial API sample; the two longest-video repeats and full40-video API qualification are still outstanding. FourDEV API calls reproduce the exact benchmark request hashes and answers. Augmentation checks are in progress. The reserve is not independent and no per-video reserve errors were inspected for tuning.
 
-Actual GPU network-denied proof remains incomplete: two model processes pass the kernel guard, while the EngineCore audit rejected its same-machine TCPStore connection. A tested correction recognizes only exact namespace-owned interface addresses, not arbitrary private networks; it requires the next controlled model restart. No offline/Tech credit is claimed from this failed attempt.
+The historical GPU network-denied attempt was incomplete: two model processes passed the kernel guard, while the EngineCore audit rejected its same-machine TCPStore connection. A tested correction recognized only exact namespace-owned interface addresses, not arbitrary private networks; it then required the next controlled model restart. No offline/Tech credit was claimed from that failed attempt. The later successful proof is recorded above.
+
+### Service endpoint and architecture
 
 Public development URL: https://p7ayn21cpy6voe-8000.proxy.runpod.net . API uses X-API-Key, delivered separately; never committed here. Upload MOV/MP4, poll the returned job. Prototype availability does not establish accuracy. The existing A40 Pod is the only approved host; $0.59/hour, $15 total including storage, auto top-up off. Preserve serving time for jury testing.
 
 The service separates durable upload/jobs, source-time video decoding, pretrained observations, explicit physical predicates/rules, a self-hosted vision auditor and source-aligned JPEG evidence. API fields remain the supplied contract. CPU fallback works locally but its numeric anomaly model is weak and lacks action-specific grounding. No face identification/audio or hosted AI inference is used by the service.
 
-## Component provenance
+## Historical component summary
+
+This compact summary predates the complete installed inventory and successful GPU proof above; its pending-status wording is retained as historical provenance. Use the current audit and checkpoint3 evidence for qualification status.
 
 | Component | License | Pin and current status |
 |---|---|---|

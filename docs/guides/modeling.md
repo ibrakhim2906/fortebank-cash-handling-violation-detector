@@ -16,5 +16,7 @@ Command: `uv run python -m src.train --models dummy,linear,lgbm,cat --note "<wha
 - Calibration: if the business case multiplies probabilities by money (expected loss), check calibration and calibrate on out-of-fold predictions.
 - The final model is retrained on all training data (train.py does this for LightGBM).
 
+Training is now staged: default `src.train` is development-only. For binary tasks freeze the selected LightGBM threshold using `src.impact`, then explicitly run `src.train --stage finalize` to measure the configured holdout before final all-training fitting. Use the same run directory for every command. LightGBM is the supported delivered artifact; CatBoost/blend remain comparison outputs. A changed source/config/input requires a fresh run. Do not select the deployed model from an impact script's search for leftover files.
+
 ## Non-tabular or unusual problems
 Read `problem_types.md` first and propose a plan before coding.
