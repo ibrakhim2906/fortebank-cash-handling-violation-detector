@@ -23,6 +23,7 @@ def recipe_fingerprint():
            'auditor_action_windows':os.environ.get('AUDITOR_ACTION_WINDOWS','off'),
            'auditor_workflow':os.environ.get('AUDITOR_WORKFLOW','original'),
            'auditor_confirmation':os.environ.get('AUDITOR_CONFIRMATION','strict'),
+           'auditor_recall':os.environ.get('AUDITOR_RECALL','off'),
            'auditor_frames':os.environ.get('AUDITOR_FRAMES','16'),
            'auditor_context':os.environ.get('AUDITOR_CONTEXT','16384'),
            'model_endpoint':os.environ.get('VLLM_URL','http://127.0.0.1:8001')}
@@ -135,6 +136,7 @@ def analyze_detailed(path,deadline=None,*,requester=None):
                            sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started)
     complete=not any(e['stage']=='audit_incomplete' for e in audits)
     if not complete:warnings.append('Only supported observations are returned; the temporal audit was incomplete.')
+    if any(e['stage']=='recall_incomplete' for e in audits):warnings.append('A supplementary recall check was incomplete; primary audit coverage is unchanged.')
     events=combine(rule_events,candidates,rules);result=build_result(events,frames,rules);_check_deadline(deadline)
     return result,dict(engine='mission-v1',recipe_sha256=recipe_fingerprint(),perception_engine=observations.get('engine'),scene=scene,facts=facts,auditor=audits,events=events,warnings=warnings,
                        sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started,audit_complete=complete,production_qualified=False)
