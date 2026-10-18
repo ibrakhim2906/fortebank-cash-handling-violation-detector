@@ -53,7 +53,7 @@ def encode_inspection_jpeg(image):
 
 def source_sample(frame,index):
     sample=dict(timestamp_sec=frame['timestamp_sec'],source_frame_index=frame['source_frame_index'],image=encode_jpeg(frame['image']))
-    if os.environ.get('AUDITOR_SPATIAL','off')=='open_state' or os.environ.get('AUDITOR_DESK_RESCAN','off')=='on':
+    if os.environ.get('AUDITOR_SPATIAL','off') in ['open_state','state_ledger'] or os.environ.get('AUDITOR_DESK_RESCAN','off')=='on':
         # The service accepts at most300s, sampled at2fps. Keep bytes only;
         #602samples allow timestamp rounding and cap auxiliary retention.
         if index>=602:raise ValueError('Spatial inspection sample budget exceeded')
@@ -127,7 +127,11 @@ def analyze_detailed(path,deadline=None,*,requester=None):
     except (OSError,TimeoutError,ValueError,KeyError,UnusableVisibilityError) as exc:
         warnings.append('Auditor unavailable/invalid; weak numeric CPU fallback used: '+type(exc).__name__)
         result=cpu_fallback(path,deadline)
-        return result,dict(engine='mission-v1-degraded',recipe_sha256=recipe_fingerprint(),warnings=warnings,sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started)
+        failure=next((entry for entry in reversed(audits) if entry.get('stage')=='audit_incomplete'),{})
+        return result,dict(engine='mission-v1-degraded',recipe_sha256=recipe_fingerprint(),warnings=warnings,
+                           auditor=audits,failed_stage=failure.get('failed_stage','auditor_dispatch'),
+                           error_code=failure.get('error_code',type(exc).__name__),fallback_exception_type=type(exc).__name__,
+                           sampled_frames=len(frames),perception_sec=perception_sec,elapsed_sec=time.monotonic()-started)
     complete=not any(e['stage']=='audit_incomplete' for e in audits)
     if not complete:warnings.append('Only supported observations are returned; the temporal audit was incomplete.')
     events=combine(rule_events,candidates,rules);result=build_result(events,frames,rules);_check_deadline(deadline)

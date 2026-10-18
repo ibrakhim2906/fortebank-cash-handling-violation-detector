@@ -25,10 +25,11 @@ def setup_run(tmp_path,monkeypatch,elapsed=None):
 
 def test_cached_sweep_advances_lazy_spatial_admission(tmp_path,monkeypatch):
     clock,payload,response,run=setup_run(tmp_path,monkeypatch,145)
-    from service.pipeline.spatial import crop_pair
+    from service.pipeline.spatial import crop_pair,GroundedBox,bounded_box,state_samples
     spatial=types.ModuleType('service.pipeline.spatial');spatial.__spec__=ModuleSpec(spatial.__name__,loader=None);spatial.time=time
     # Lazy desk import needs the real crop helper; do not poison its retained binding.
     spatial.crop_pair=crop_pair
+    spatial.GroundedBox=GroundedBox;spatial.bounded_box=bounded_box;spatial.state_samples=state_samples
     monkeypatch.setitem(sys.modules,spatial.__name__,spatial)
     def infer(path,deadline,requester):
         requester('http://127.0.0.1',payload,150)

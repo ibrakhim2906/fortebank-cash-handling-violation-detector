@@ -44,9 +44,9 @@ def work_box(answer):
 
 def desk_rescan(frames,deadline,*,requester=None):
     from service.pipeline.auditor import choose,predicate_catalogue
-    logs=[]
+    logs=[];pending_stage='desk_grounding'
     def incomplete(code):
-        logs.append(dict(stage='audit_incomplete',error_code=code));return [],logs
+        logs.append(dict(stage='audit_incomplete',failed_stage=pending_stage,error_code=code));return [],logs
     if len(frames)<2 or time.monotonic()+35>=deadline:return incomplete('DeskRescanBudget')
     # Inspection originals remain auxiliary; never alter coarse/API source bytes.
     contexts=[dict(frame,image=frame.get('inspection_image',frame['image'])) for frame in choose(frames,3)]
@@ -59,6 +59,7 @@ def desk_rescan(frames,deadline,*,requester=None):
         logs.append(dict(stage='desk_grounding',**meta,answer=region.model_dump()))
         box=work_box(region)
         if box is None:return incomplete('DeskRegionUnknown')
+        pending_stage='desk_rescan'
         if time.monotonic()+15>=deadline:return incomplete('DeskRescanStateBudget')
         selected=choose(frames,16);cropped=[crop_pair(frame,box) for frame in selected]
         catalogue='\n'.join(line for line in predicate_catalogue().splitlines() if line.partition(':')[0] in KINDS)
