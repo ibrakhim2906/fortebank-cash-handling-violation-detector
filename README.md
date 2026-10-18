@@ -1,5 +1,7 @@
 # ForteBank cash-handling violation detector
 
+[Русская версия](README.ru.md)
+
 A local video-review service for cash-desk CCTV. Upload a recording and get back:
 - a verdict (violation or not);
 - each event's type, timecode and evidence frames;
@@ -58,7 +60,7 @@ All numbers come from real runs with the frozen evaluator (`scripts/eval_video.p
 | + rescue, **rotated 10°** (robustness) | DEV30 | 20/30 | 8 / 8 / 2, 1 failed | 4/16 |
 
 - **How rows were measured:** the public-API row was measured through the live service. The rescue rows were run on the same model in an isolated copy of the service; with recall off, that copy reproduced all 30 DEV results exactly.
-- **Latency:** the slowest of the 40 public-API uploads took 73.0 s, and two repeats took 64.9 s and 65.9 s, all within the 200 s limit.
+- **Latency:** the slowest of the 40 public-API uploads took 73.0 s, and two repeats took 64.9 s and 65.9 s, all within the 5-minute limit.
 - **Event types:** every event matched in time got the correct type.
 - **Log:** every experiment, including the ones we dropped, is in `experiments.md`.
 
