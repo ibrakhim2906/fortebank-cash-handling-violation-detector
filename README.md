@@ -1,122 +1,111 @@
-# Datathon '26 kit (team-only — replace with the solution README tomorrow)
+# ForteBank cash-handling violation detector
 
-A prepared repo for a 24-hour datathon where Codex writes most of the code under our direction.
+A local video-review service for cash-desk CCTV. Upload a recording and get back:
+- a verdict (violation or not);
+- each event's type, timecode and evidence frames;
+- a description that cites the specific clause of НБРК №231 the event relates to.
 
-The latest full case/data/rubric/hardware assessment and proposed recognition pivot are in [`docs/recognition_recovery_plan.md`](docs/recognition_recovery_plan.md). External datasets are explicitly permitted by FAQ7. The proposal prioritizes independently reviewed action intervals and one compact temporal model; new dependencies and external data have not been installed for it.
+All inference runs on our own GPU with an open-weight model. No cloud AI APIs are used, there is no face identification, and the service works with network access blocked.
 
-## Current case: local cashier-video reviewer (P2 baseline)
+**Public API:** `https://p7ayn21cpy6voe-8000.proxy.runpod.net` (the API key is delivered privately).
 
-The actual case is a local video-review service. The first working flow accepts `.mov`, runs a saved local model, and returns the jury JSON with a verdict, candidate time and uploaded-video JPEG evidence. The UI/API are implemented. **Detection quality is not yet useful:** development ROC-AUC is 0.509804 for the linear model versus 0.500000 dummy; the shallow LightGBM comparison is 0.409804. Precise event types and normative rule grounding are not implemented. This is an engineering baseline, not a competition-ready violation detector. See `reports/p2_video.md`.
+## How it works
 
-The requested local pretrained experiment is implemented and documented in [`reports/pretrained_video.md`](reports/pretrained_video.md). OpenCV runs pinned MobileNetV2 weights locally with no additional package. Its best clip-pooling candidate reaches development AUC 0.588235 but catches only 8/17 positives versus the baseline's 10/17. A fixed maximum-window follow-up reaches AUC 0.329412 with 13/15 false alarms. Both fail the predeclared promotion gate, so the default live model remains the original flow-testing baseline. Both experimental artifacts are preserved for review; the report contains exact training, sanity, offline and temporary-serving commands. These are development results, with the eight reserved videos untouched.
-
-Action labeling is implemented in [`reports/action_labels.md`](reports/action_labels.md). The private Windows review page is `http://127.0.0.1:8004/` while its local processes are running; it is separate from the detector on Windows port 8001. The 33 development tasks preserve both disputed anchors. Approved pinned Qwen3-VL/llama.cpp assets are installed. Three autonomous draft/critique rechecks completed, bringing the journal to six proposals, with zero agreed present actions or independently verified labels. The original constant-feature action detector is rejected; its history is in [`reports/qwen_action_detection.md`](reports/qwen_action_detection.md).
-
-The latest fixed spatial comparison improves development AUC **0.509804 → 0.615686**, recall **10/17 → 11/17**, and false alarms **10/15 → 5/15**, while median timestamp error worsens **5 → 9.733333 seconds**. It passes the minimum numerical detection gate, but fresh descriptors differ from its training cache and flip the saved verdict, so **live promotion is withheld**. No action-type or rule accuracy is established. The independent object-track comparison fails promotion. Actual metrics and replay evidence are in [`reports/recognition_followup.md`](reports/recognition_followup.md).
-
-The separate native-video motion gate passes only **1/3** controls; cache-off repeats pass **2/6**, with every answer `left_to_right` and reported `cache_n = 0`. **The native bank-video pilot remains unrun and blocked.** Red/blue input checks pass **4/4** across native video and JPEG in **15.454847 seconds**; fixed RRBB/BBRR first/last-color controls pass **2/2** in **10.037758 seconds**. Exact FFmpeg reproduction correctly decodes all three synthetic sequences. Color delivery and coarse first/last order work; square-motion and cashier-action accuracy remain unproven. These native results do not resolve the separate spatial replay drift. All checks use zero bank or holdout clips, and eight reserved recordings remain untouched. See [`docs/inference_cache_repair_plan.md`](docs/inference_cache_repair_plan.md) and [`docs/local_video_decoder.md`](docs/local_video_decoder.md).
-
-The prepared run in this workspace is `data/processed/video-baseline-comparison/`. Start it with:
-
-```bash
-uv sync --locked
-uv run python -m scripts.serve_video
+```
+.mov upload → frame sampling (16 overview images, source timestamps kept)
+            → Qwen3-VL-32B-Instruct-AWQ sweep: typed candidate events with onset/evidence frames
+            → dense focused confirmation of each proposal (rejects unsupported concerns)
+            → storage veto: counter-examples for "cash/safe left out" (cuts false alarms)
+            → rescue pass: phase-shifted second sweep re-checks missed/uncertain events
+            → result JSON: verdict, typed events, timecodes, evidence JPEGs, cited rule
 ```
 
-Linux-local endpoint: `http://127.0.0.1:8000/`. **For the Windows browser on this machine use `http://127.0.0.1:8001/`**, through the verified Windows loopback bridge described below. The launcher creates a private local API key at `data/processed/video-service/api-key.txt`, without logging its value. Open that file locally and paste the key into the page. Upload a `.mov`. Both `POST /api/v1/analyze` (multipart `file`) and `GET /api/v1/jobs/{job_id}` require `X-API-Key`. Uploads are bounded at 64 MiB; one job runs at a time, with two waiting slots and a five-minute total deadline. Uploaded job files are deleted after processing; restart loses in-memory job results. Run one server worker, without reload.
+- **Model:** `QuantTrio/Qwen3-VL-32B-Instruct-AWQ` (Apache-2.0), served by vLLM 0.11.0 on one A40 at `127.0.0.1:8002`. The model port is never exposed.
+- **Service:** FastAPI (`service/app.py`). Jobs are asynchronous, so the request returns a job ID immediately. One worker handles one job at a time, with a 185 s analysis budget inside the 5-minute deadline.
+- **Pipeline:** `service/pipeline/analyze.py` orchestrates the steps above. `service/pipeline/auditor.py` holds the model stages (sweep, confirmation, rescue).
+- **Rules:** `service/rules.json` defines 14 violation types. Each type has a Russian and an English name and, where one has been verified, an exact quote from the official act.
 
-Windows-to-WSL localhost forwarding did not work in this environment. Keep the Linux service above running and start the existing bundled Windows Node runtime in a separate Windows PowerShell terminal:
+## API
 
-```powershell
-& 'C:\Users\ibrak\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '\\wsl.localhost\Ubuntu-24.04\home\ibrak\datathon-kit\scripts\windows_loopback_proxy.cjs' --distro Ubuntu-24.04 --root /home/ibrak/datathon-kit --port 8001
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/v1/analyze` | multipart `file` (.mov), header `X-API-Key` → `{job_id}` |
+| `GET` | `/api/v1/jobs/{job_id}` | header `X-API-Key` → status, then result |
+| `GET` | `/` | web UI: upload, timeline, evidence frames |
+| `GET` | `/health` | liveness and queue length |
+
+The result has this shape:
+
+```json
+{"verdict": "violation",
+ "violations": [{"type": "Наличные деньги оставлены вне сейфа (хранилища) / Storage of previously accepted cash outside designated lockable storage units",
+                 "timecode_sec": 9.0,
+                 "description": "На 9.00 с видно: … Норма: НБРК №231, п.20, ч.2: «…» (https://adilet.zan.kz/rus/docs/V1900019680). Применимость к операции требует проверки человеком.",
+                 "evidence_frames": [{"timestamp_sec": 9.0, "image_base64": "…"}]}]}
 ```
 
-The bridge binds **only Windows 127.0.0.1** and forwards the UI/API through local WSL stdin/stdout to Linux 127.0.0.1:8000. It does not bind a LAN address, change firewall settings, use an external service or log keys/media. Both the UI and keyed video upload have been verified from Windows. These executable/distro paths describe this machine; other machines should use their own existing Node runtime and WSL distribution name. Both processes must remain running.
+## Measured results
 
-To prepare the same flow in a checkout with intentionally provisioned input files, use the original source paths or replace those paths with the actual permitted copies:
+All numbers come from real runs with the frozen evaluator (`scripts/eval_video.py`). The team reviewed all 40 supplied videos during development, so none of these are independent test scores.
 
-```bash
-uv run python -m scripts.inspect_video_release --archive /mnt/c/Users/ibrak/Downloads/open.zip --brief /mnt/c/Users/ibrak/Downloads/Кейс_ForteBank.docx
-uv run python -m src.train --task video --run-dir data/processed/video-baseline-comparison --models linear,lgbm --note "P2 local baseline"
-uv run python -m src.sanity --task video --run-dir data/processed/video-baseline-comparison
-uv run pytest
-uv run python -m scripts.serve_video
-```
+| Recipe | Data | Correct verdicts | TP / FN / FP | Events within ±2 s |
+|---|---|---:|---|---:|
+| Selected (storage veto) | DEV30 | 23/30 | 12 / 4 / 3 | 5/16 |
+| **+ rescue recall pass** | DEV30 | **24/30** | 13 / 3 / 3 | 5/16 |
+| Selected, public API | all 40 | 27/40 | 13 / 8 / 5 | 6/22 |
 
-Training requires a fresh run directory and preserves the frozen `data/processed/fortebank-20261017/video_protocol.json`. It counts 40 unique content groups once, reserves eight clips, and runs three folds on 32 development clips. P2 never decodes or evaluates the reserved eight. Raw delivery and generated data/model/key files are ignored by Git. No cloud AI or face identification is used. Dependencies are locked; no pretrained external model weights are required for this baseline. CPU inference is measured, but generalization to another camera is unverified.
+- **Latency:** the slowest of the 40 public-API uploads took 73.0 s, and two repeats took 64.9 s and 65.9 s, all within the 200 s limit.
+- **Event types:** every event matched in time got the correct type.
+- **Log:** every experiment, including the ones we dropped, is in `experiments.md`.
 
-Optional local verification against a running server:
+## Rule grounding
 
-```bash
-uv run python -m scripts.check_video_flow
-```
+Seven violation types cite exact wording from the current official revision of **НБРК №231 «Правила ведения кассовых операций»**. The text was retrieved from the Adilet API and its SHA-256 is recorded in `service/rules.json`.
 
-This checks two development examples, renamed-upload invariance, authorization, evidence JPEGs and corrupt-file handling. It prints only numeric/status summaries, never footage or frame payloads. The tabular rehearsal below remains an isolated preparation example; its model scores do not describe this video case.
-
-## What's inside
-| Path | Purpose |
+| Type | Clause |
 |---|---|
-| `AGENTS.md` | Standing rules Codex reads on every task |
-| `PLAYBOOK.md` | Copy-paste prompts, phase by phase |
-| `CHECKLIST.md` | Every requirement from the brief (judges grade against it) |
-| `experiments.md` | Log of every result (auto-appended by train.py) |
-| `docs/brief.md` | Paste the case text here at 11:00 |
-| `docs/context.md` | Case context template (Codex drafts, humans confirm) |
-| `docs/jury.md` | Questions for ForteBank mentors + their answers |
-| `docs/decisions.md` | Decisions log so Codex stays consistent |
-| `docs/guides/` | Phase guides: validation, features, modeling, sanity, explain/impact, problem types, demo/README, pitch |
-| `src/` | Working starter pipeline for tabular binary classification / regression |
-| `app/app.py` | Streamlit demo: client → prediction → reasons → impact |
-| `scripts/make_synthetic.py` | Fake data for tonight's dry run |
-| `examples/multitable/` | Tested pattern for applications + history tables, with a leakage demo |
-| `tests/` | Point-in-time leakage test to copy for new feature families |
+| Cash left outside storage, safe left open | п.20, ч.2: accepted cash is kept in lockable storage |
+| Counting without the client | п.20, ч.1: cash is accepted and counted in the client's presence |
+| No note-by-note count | п.19, пп.2 |
+| No ID check | п.19, пп.1 |
+| No receipt issued | п.19, пп.6 |
+| Personal items in the cash unit | п.12 |
 
-Pitch deck template: the "Datathon ’26 Pitch Template" Slides artifact in your claude.ai artifacts (8 slides with placeholders and timed speaker notes). Share it with teammates from its Share menu.
+Types without a directly applicable clause (door, keys, food, reading) make no legal claim. Every description says that applicability needs human review. The sources and their limits are documented in `docs/action_rule_candidates.md`.
 
-## Environment: uv
-Python and every package are managed by [uv](https://docs.astral.sh/uv/). `pyproject.toml` lists the dependencies, `uv.lock` pins the exact tested versions, `.python-version` pins Python 3.12.
-- Install uv once: macOS/Linux/WSL `curl -LsSf https://astral.sh/uv/install.sh | sh` · Windows PowerShell `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
-- Create the environment: `uv sync` (downloads Python 3.12 if needed, installs the locked versions into `.venv`)
-- Run anything: `uv run <command>` (no activation needed)
-- Add a package (only after the team agrees): `uv add <package>`; never `pip install`
+## Local inference and licences
 
-## Rehearse safely
+- **Network-denied run:** passed on the selected GPU recipe (`data/processed/mission-selected-gpu-offline-proof.json`).
+- **Licence check:** `uv run python -m scripts.verify_license_policy` checks all 238 installed distributions, plus CPython, the FFmpeg decoder and the model weights, against the organisers' rule, with 0 failures. Under that rule, code and models must be open source with commercial use permitted, and the model weights must be Apache/MIT/BSD. The full table is in `docs/submission.md`.
+
+## Run it
 
 ```bash
 uv sync --locked
-uv run python -m scripts.rehearse --output data/processed/rehearsals/my-first-run
-uv run pytest
-DATATHON_RUN_DIR=data/processed/rehearsals/my-first-run DATATHON_THREADS=2 uv run streamlit run app/app.py
+uv run pytest                                   # 1234 passed, 2 skipped
+# GPU pod: model server + API (see docs/runpod_setup.md)
+bash scripts/pod_setup.sh prepare               # pinned vLLM env + model download
+set -a; . deploy/mission-best.env; set +a       # selected recipe; add AUDITOR_RECALL=rescue
+bash scripts/pod_setup.sh supervise model &
+bash scripts/pod_setup.sh supervise service &
 ```
 
-Use a fresh output directory each time. The runner generates seed-42 synthetic inputs outside `data/raw/`, measures development models, runs sanity checks, freezes the LightGBM threshold, evaluates the final holdout, refits for submission, creates explanations and value scenarios, checks three demo examples, and replays in a clean source snapshot. Logs, experiment rows, artifacts and `result.json` stay inside that run. The replay uses locked cached dependencies offline; it is not a test of a new package download.
+To run the DEV30 evaluation and compare runs, use `tools/claude-recall/run_dev30.py`, then `tools/claude-recall/fetch_score.sh <run>`, then `scripts/compare_runs.py`.
 
-The fixture is a synthetic binary task, not the unknown competition case. No bank-validated costs, real-data scores, official metric/format assumptions or competition-readiness claims follow from its numbers. Raw data and the real-case templates remain untouched. Read `reports/rehearsal.md` for the actual completed preparation results and remaining human checks.
+## Repository
 
-## Case workflow
+| Path | Contents |
+|---|---|
+| `service/` | API, web UI and the recognition pipeline |
+| `src/` | video I/O, result schema, evaluation helpers |
+| `scripts/` | evaluation, qualification, pod setup and licence verification |
+| `deploy/` | pinned model manifests and the selected recipe (`mission-best.env`) |
+| `tests/` | 1234 tests |
+| `docs/` | case brief, decisions log, submission and licence audit, legal sources |
+| `experiments.md` | every experiment with its measured result |
 
-Follow P1/P2 in `PLAYBOOK.md` to configure the real case and choose validation. Set agreed economic assumptions before development. Each run may supply a `config.json` containing overrides of the existing case settings and input filenames. Relative input filenames resolve against the run directory. Without a run config, settings come from `src/config.py`.
+## Limitations
 
-```bash
-uv run python -m src.train --run-dir data/processed/case-run-1 --models dummy,linear,lgbm,cat --note baseline
-uv run python -m src.sanity --run-dir data/processed/case-run-1
-uv run python -m src.impact --run-dir data/processed/case-run-1 --oof lgbm
-uv run python -m src.train --run-dir data/processed/case-run-1 --stage finalize
-uv run python -m src.explain --run-dir data/processed/case-run-1
-DATATHON_RUN_DIR=data/processed/case-run-1 uv run streamlit run app/app.py
-```
-
-These commands require P2 to supply the actual input data/settings first. For regression skip the binary impact step; the policy is frozen without a decision threshold. Development never creates a final model or submission. Finalization evaluates a configured holdout with frozen settings, records its results, then refits retrospectively on all supplied training labels. A live-use model must obey real label availability. Repeating finalization is rejected.
-
-LightGBM is the supported delivered model. CatBoost/blend scores are development comparisons. The app, explanation, threshold and CSV must identify the same selected run/model. Manifests check source/config/input fingerprints and artifact hashes; use a fresh run after changes. Preserve the thread setting when one was configured with `DATATHON_THREADS`.
-
-Parallel chats require separate worktrees/clones and separate output directories. Stage intended files explicitly, review `git diff --cached`, then commit a checkpoint; `git commit -am` misses new files. Rehearsal and case data/models are ignored by Git and must be intentionally provisioned in a fresh checkout. Never delete raw files as rehearsal cleanup.
-
-## Tomorrow
-Follow `PLAYBOOK.md`. AI tools and prepared code are confirmed allowed by the human; obtain the actual brief, permitted data and any additional organizer restrictions. Supply context as it arrives using `START_HERE.md`.
-
-## Roles
-- **Driver:** runs Codex, reviews diffs, merges to main.
-- **Verifier:** owns `src/eval.py` and the sanity checks, checks every number.
-- **Analyst / pitch:** talks to ForteBank mentors, owns the insight, business case and deck (starts the deck by hour 6).
-- **Demo:** app, README, backup video.
+- **Timing:** events where a state persists (cash left out, door open) are often flagged when the state first becomes visible, before the moment the annotators marked, so most of them land outside ±2 s.
+- **Omissions:** steps that should have happened but didn't (no receipt, no ID check, counting without the client) are rarely detected from sampled frames. The pipeline deliberately never infers an omission from frames that weren't seen.
+- **Validation:** the team reviewed all 40 supplied videos, and nothing here is validated on an unseen camera layout.

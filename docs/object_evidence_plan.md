@@ -1,9 +1,0 @@
-# Evidence presentation after the fixed object trial
-
-This is a small presentation follow-up within the human's request to improve recognition and explain its results. It must not change the frozen extractor, model, score, threshold, window selection or folds. The object candidate can be activated only after the existing detection promotion gate, sanity, provenance audit and local runtime/API checks pass.
-
-For the already selected positive two-second window, a pure helper may identify a stable non-person detector track with at least three distinct observations spanning at least one second inside that window. It may call the observation a phone-like, bag-like or laptop-like object. These are uncertain pretrained object categories, not action labels or violation types. Person boxes supply anonymous geometry only. Never explain a positive window with an unrelated object elsewhere in the clip.
-
-Use first/middle/last supported original sample timestamps, at most three frames. The existing evidence decoder must confirm actual timestamps and preserve original whole-frame JPEGs. If no stable relevant track exists, retain the generic candidate and original selected time. Reject malformed audit material rather than manufacture evidence. Explanations may describe detector-supported presence; do not infer holding, use, ownership, storage, intent, removal, counting compliance or a rule violation. Existing automatic rule mappings stay disabled.
-
-Synthetic tests must cover stability, window bounds, source-time order, invalid geometry, deterministic ties, generic fallback and the absence of unsupported semantic claims. The helper alone does not justify deployment or establish event-type accuracy. Multiple-event policy and automatic rule grounding remain separate unfulfilled requirements.
