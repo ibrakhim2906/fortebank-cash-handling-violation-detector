@@ -20,6 +20,7 @@ def recipe_fingerprint():
            'auditor_scan':os.environ.get('AUDITOR_SCAN','full'),
            'auditor_spatial':os.environ.get('AUDITOR_SPATIAL','off'),
            'auditor_desk_rescan':os.environ.get('AUDITOR_DESK_RESCAN','off'),
+           'auditor_action_windows':os.environ.get('AUDITOR_ACTION_WINDOWS','off'),
            'auditor_workflow':os.environ.get('AUDITOR_WORKFLOW','original'),
            'auditor_confirmation':os.environ.get('AUDITOR_CONFIRMATION','strict'),
            'auditor_frames':os.environ.get('AUDITOR_FRAMES','16'),
@@ -53,7 +54,7 @@ def encode_inspection_jpeg(image):
 
 def source_sample(frame,index):
     sample=dict(timestamp_sec=frame['timestamp_sec'],source_frame_index=frame['source_frame_index'],image=encode_jpeg(frame['image']))
-    if os.environ.get('AUDITOR_SPATIAL','off') in ['open_state','state_ledger'] or os.environ.get('AUDITOR_DESK_RESCAN','off')=='on':
+    if os.environ.get('AUDITOR_SPATIAL','off') in ['open_state','state_ledger','storage_veto'] or os.environ.get('AUDITOR_DESK_RESCAN','off')=='on':
         # The service accepts at most300s, sampled at2fps. Keep bytes only;
         #602samples allow timestamp rounding and cap auxiliary retention.
         if index>=602:raise ValueError('Spatial inspection sample budget exceeded')

@@ -78,7 +78,7 @@ def main(argv=None):
                 if response.status!=200 or len(body)>128*1024:raise ValueError('Invalid model HTTP response')
                 requests_count[0]+=1;return json.loads(body)
         _,analysis=analyze_detailed(args.video,deadline=time.monotonic()+185,requester=request)
-        result.update(status='done',engine=analysis['engine'],primary_model_requests=requests_count[0],worker_pid=os.getpid(),ping_errors=ping_errors,
+        result.update(status='done',engine=analysis['engine'],recipe_sha256=analysis['recipe_sha256'],audit_complete=analysis.get('audit_complete'),primary_model_requests=requests_count[0],worker_pid=os.getpid(),ping_errors=ping_errors,
                       passed=analysis['engine']=='mission-v1' and requests_count[0]>0 and not ping_errors)
     except Exception as exc:result['error_code']=type(exc).__name__
     finally:

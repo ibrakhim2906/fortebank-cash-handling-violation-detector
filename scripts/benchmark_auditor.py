@@ -25,7 +25,7 @@ def pipeline_replay_clock(replayed):
     sees the same clock. Restore every module even when inference raises.
     """
     names=['service.pipeline.analyze','service.pipeline.auditor','service.pipeline.vlm','src.video_analysis']
-    for optional in ['service.pipeline.spatial','service.pipeline.desk','service.pipeline.state_ledger']:
+    for optional in ['service.pipeline.spatial','service.pipeline.desk','service.pipeline.state_ledger','service.pipeline.action_windows']:
         if importlib.util.find_spec(optional) is not None:names.append(optional)
     modules=[importlib.import_module(name) for name in names]
     originals=[(module,module.time) for module in modules]

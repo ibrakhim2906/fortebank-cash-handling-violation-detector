@@ -15,6 +15,24 @@ class StateLedger(BaseModel):
     model_config=ConfigDict(extra='forbid')
     frames:list[FrameState]=Field(min_length=1,max_length=64)
 
+def storage_counterexample(candidate,frames,onset,evidence,deadline,*,requester=None):
+    """Optional veto authority only; retain proposals on unresolved inspection.
+
+    Reuses exact ledger requests. A positive ledger does not replace the original
+    event/time, and failed auxiliary checks cannot make primary evidence fail.
+    """
+    if candidate.kind!='safe_left_open':return False,[]
+    try:
+        event,logs=verify_open_state(candidate,frames,onset,evidence,deadline,requester=requester)
+    except (OSError,TimeoutError,ValueError,KeyError) as exc:
+        return False,[dict(stage='storage_veto_incomplete',kind=candidate.kind,error_code=type(exc).__name__)]
+    unresolved=any(row.get('stage')=='audit_incomplete' for row in logs)
+    veto=(event is None and not unresolved and
+          any(row.get('stage')=='spatial_ledger_decision' and row.get('decision')=='counterexample' for row in logs))
+    logs=[dict(row,stage='storage_veto_incomplete') if row.get('stage')=='audit_incomplete' else row for row in logs]
+    logs.append(dict(stage='storage_veto_decision',kind=candidate.kind,veto=veto))
+    return veto,logs
+
 def ledger_interval(answer,count,kind):
     """An observed open access -> open after clearance; never bridge unknowns.
 
