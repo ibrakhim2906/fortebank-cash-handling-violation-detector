@@ -101,9 +101,13 @@ def build_result(events,frames,rules):
         support=min(frames,key=lambda f:abs(f['timestamp_sec']-event.get('evidence_sec',event['timecode_sec']+1.5)))
         evidence=[first]+([support] if support['source_frame_index']!=first['source_frame_index'] else [])
         fact=event.get('visible_fact','Наблюдается сочетание физических признаков; требуется проверка контекста.')
-        context=spec.get('context_source')
-        source=(f"Нормативный контекст: {context['act']} ({context['url']}); {context['scope']}" if context else
-                'Прямая публичная норма для этого наблюдения не подтверждена; внутренний регламент банка не установлен.')
+        context=spec.get('context_source');verified=[r for r in spec.get('rules',[]) if r.get('verified')]
+        if verified:
+            rule=verified[0]
+            source=f"Норма: {rule['act']}, {rule['point']}: «{rule['quote']}» ({rule['source_url']})."
+        else:
+            source=(f"Нормативный контекст: {context['act']} ({context['url']}); {context['scope']}" if context else
+                    'Прямая публичная норма для этого наблюдения не подтверждена; внутренний регламент банка не установлен.')
         description=f"На {first['timestamp_sec']:.2f} с видно: {fact} {source} Применимость к операции требует проверки человеком."
         result.append(dict(type=spec['name']+' / '+spec['name_en'],timecode_sec=first['timestamp_sec'],description=description,
                            evidence_frames=[dict(timestamp_sec=f['timestamp_sec'],image_base64=base64.b64encode(f['image']).decode()) for f in evidence]))
