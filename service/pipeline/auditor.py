@@ -96,15 +96,27 @@ def interleaved(frames,overview):
     return result
 
 
+# The case names this type "Personal activities (reading)"; the original line
+# steers the model away from books. Work paperwork remains a counterexample.
+READING=('personal_activity: the desk worker visibly reads a book, magazine, newspaper or a phone held for reading, with sustained attention across consecutive images instead of serving or handling cash. '
+         'Filling in or checking a receipt, form, ledger or cash document, a brief glance, or a closed book lying untouched are counterexamples.')
+
+
 def predicate_catalogue():
     mode=os.environ.get('AUDITOR_WORKFLOW','original')
     if mode not in ['original','storage_context']:raise ValueError('Unknown workflow context')
-    if mode=='original':return TYPE_PREDICATES
+    reading=os.environ.get('AUDITOR_READING','off')
+    if reading not in ['off','case']:raise ValueError('Unknown reading definition')
+    replace={'personal_activity:':READING} if reading=='case' else {}
+    if mode=='original':
+        if not replace:return TYPE_PREDICATES
+        return ''.join(next((text+'\n' for prefix,text in replace.items() if line.startswith(prefix)),line) for line in TYPE_PREDICATES.splitlines(keepends=True))
     definition=('cash_left_out: identifiable banknotes, or a collection bag whose cash contents were actually visible earlier in this recording, remain outside designated lockable storage after the visible cash-handling phase has ended or after the established cashier leaves. '
                 'Distinguish the cashier using actual cash-equipment/storage work from the client being served; client departure alone is NOT cashier departure. '
                 'Previously accepted cash put aside while work continues elsewhere may be a storage concern even if the cashier remains seated. '
                 'Active counting/preparation/handover, temporary client cash during service and unidentified bags are counterexamples; mere cash presence is insufficient.')
-    return ''.join(definition+'\n' if line.startswith('cash_left_out:') else line for line in TYPE_PREDICATES.splitlines(keepends=True))
+    replace['cash_left_out:']=definition
+    return ''.join(next((text+'\n' for prefix,text in replace.items() if line.startswith(prefix)),line) for line in TYPE_PREDICATES.splitlines(keepends=True))
 
 
 def refine_onset(event,frames,deadline,*,requester=None,stages=('global_onset','dense_onset')):

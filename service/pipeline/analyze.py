@@ -24,6 +24,7 @@ def recipe_fingerprint():
            'auditor_workflow':os.environ.get('AUDITOR_WORKFLOW','original'),
            'auditor_confirmation':os.environ.get('AUDITOR_CONFIRMATION','strict'),
            'auditor_recall':os.environ.get('AUDITOR_RECALL','off'),
+           'auditor_reading':os.environ.get('AUDITOR_READING','off'),
            'auditor_frames':os.environ.get('AUDITOR_FRAMES','16'),
            'auditor_context':os.environ.get('AUDITOR_CONTEXT','16384'),
            'model_endpoint':os.environ.get('VLLM_URL','http://127.0.0.1:8001')}

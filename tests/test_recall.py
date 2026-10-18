@@ -188,3 +188,26 @@ def test_tiled_windows_do_not_multiply_recall_calls(env):
     env.setenv('AUDITOR_RECALL','on');model=Model(primary=[candidate(support='uncertain',onset=1,evidence=1)]);env.setattr(a,'ask',model)
     a.confirmed_observations(source(12),time.monotonic()+160,overview_count=8,allow_omissions=False)
     assert model.stages()==['sweep']
+
+
+@pytest.mark.parametrize('workflow',['original','storage_context'])
+def test_reading_definition_changes_only_its_own_line(monkeypatch,workflow):
+    monkeypatch.setenv('AUDITOR_WORKFLOW',workflow);monkeypatch.setenv('AUDITOR_READING','off');before=a.predicate_catalogue().splitlines()
+    monkeypatch.setenv('AUDITOR_READING','case');after=a.predicate_catalogue().splitlines()
+    changed=[(old,new) for old,new in zip(before,after) if old!=new]
+    assert len(before)==len(after) and len(changed)==1 and changed[0][1]==a.READING
+    assert 'reads a book' in a.READING and 'receipt' in a.READING
+    monkeypatch.setenv('AUDITOR_READING','loose')
+    with pytest.raises(ValueError):a.predicate_catalogue()
+
+
+def test_reading_off_is_the_original_catalogue(monkeypatch):
+    monkeypatch.setenv('AUDITOR_WORKFLOW','original');monkeypatch.delenv('AUDITOR_READING',raising=False)
+    assert a.predicate_catalogue() is a.TYPE_PREDICATES
+
+
+def test_rescued_reading_still_needs_two_confirmations(env):
+    env.setenv('AUDITOR_READING','case')
+    model=Model(primary=[candidate('personal_activity',support='uncertain')])
+    events,_=run(env,'rescue',model)
+    assert model.stages()==['sweep','shifted_sweep','focused','focused'] and len(events)==1
