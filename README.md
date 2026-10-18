@@ -55,6 +55,7 @@ All numbers come from real runs with the frozen evaluator (`scripts/eval_video.p
 | Selected, public API | all 40 | 27/40 | 13 / 8 / 5 | 6/22 |
 | **+ rescue recall pass** | all 40 | **28/40** | 14 / 7 / 5 | 6/22 |
 | + rescue, **mirrored video** (robustness) | DEV30 | 19/30 | 11 / 5 / 5, 1 failed | 7/16 |
+| + rescue, **rotated 10°** (robustness) | DEV30 | 20/30 | 8 / 8 / 2, 1 failed | 4/16 |
 
 - **How rows were measured:** the public-API row was measured through the live service. The rescue rows were run on the same model in an isolated copy of the service; with recall off, that copy reproduced all 30 DEV results exactly.
 - **Latency:** the slowest of the 40 public-API uploads took 73.0 s, and two repeats took 64.9 s and 65.9 s, all within the 200 s limit.
